@@ -1,0 +1,94 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Common functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function hasRole(role) {
+      return isSignedIn() && 
+        (request.auth.token.role == role || 
+         (request.auth.token.roles != null && role in request.auth.token.roles));
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isParent() {
+      return hasRole('parent');
+    }
+    
+    function isSchool() {
+      return hasRole('school');
+    }
+    
+    function isAuthority() {
+      return hasRole('authority');
+    }
+    
+    function isCommunity() {
+      return hasRole('community');
+    }
+    
+    function isOwner(userId) {
+      return isSignedIn() && request.auth.uid == userId;
+    }
+    
+    function isGuardian(guardianIds) {
+      return isSignedIn() && request.auth.uid in guardianIds;
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      // Anyone signed in can read user profiles
+      allow read: if isSignedIn();
+      
+      // Only admins can create/update/delete users through client-side
+      // Server-side Admin SDK bypasses these rules
+      allow create, update, delete: if isAdmin();
+      
+      // Users can update their own profiles
+      allow update: if isOwner(userId);
+    }
+    
+    // Children collection
+    match /children/{childId} {
+      // Anyone signed in can read children profiles
+      allow read: if isSignedIn();
+      
+      // Parents can create children profiles, admins can create any child
+      // Server-side Admin SDK bypasses these rules
+      allow create: if isAdmin() || isParent();
+      
+      // Parents can update their own children, admins can update any child
+      allow update: if isAdmin() || (isParent() && resource.data.guardians.hasAny([request.auth.uid]));
+      
+      // Only admins can delete children profiles
+      allow delete: if isAdmin();
+    }
+    
+    // Alerts collection
+    match /alerts/{alertId} {
+      // Anyone signed in can read alerts
+      allow read: if isSignedIn();
+      
+      // Parents, authorities, and admins can create alerts
+      allow create: if isAdmin() || isParent() || isAuthority();
+      
+      // Authorities can update alerts they created, parents can update alerts for their children, admins can update any alert
+      allow update: if isAdmin() || isAuthority() || 
+                     (isParent() && resource.data.createdBy == request.auth.uid);
+      
+      // Only admins can delete alerts
+      allow delete: if isAdmin();
+    }
+    
+    // Audit logs collection - only server-side access
+    match /audit_logs/{logId} {
+      allow read: if isAdmin();
+      allow write: if false; // Only allow writes from server
+    }
+  }
+}

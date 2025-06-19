@@ -1,0 +1,129 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    // Common functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function hasRole(role) {
+      return get(/databases/$(database)/documents/users/$(request.auth.uid)).data.role == role;
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isParent() {
+      return hasRole('parent');
+    }
+    
+    function isSchool() {
+      return hasRole('school');
+    }
+    
+    function isAuthority() {
+      return hasRole('authority');
+    }
+    
+    function isCommunity() {
+      return hasRole('community');
+    }
+    
+    // Users collection
+    match /users/{userId} {
+      allow read: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow create: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow update: if isSignedIn() && (isOwner(userId) || isAdmin());
+      allow delete: if isAdmin();
+    }
+    
+    // Children collection
+    match /children/{childId} {
+      // Check if user is a guardian of the child
+      function isGuardian() {
+        return request.auth.uid in resource.data.guardians;
+      }
+      
+      // Check if user is from the child's school
+      function isChildSchool() {
+        return isSchool() && resource.data.schoolName == get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organization?.id;
+      }
+      
+      allow read: if isSignedIn() && (isGuardian() || isChildSchool() || isAuthority() || isAdmin());
+      allow create: if isSignedIn() && (isParent() || isAdmin());
+      allow update: if isSignedIn() && (isGuardian() || isChildSchool() || isAdmin());
+      allow delete: if isSignedIn() && (isGuardian() || isAdmin());
+    }
+    
+    // Alerts collection
+    match /alerts/{alertId} {
+      // Check if user created the alert
+      function isCreator() {
+        return request.auth.uid == resource.data.createdBy;
+      }
+      
+      // Check if alert is for a child from user's school
+      function isSchoolAlert() {
+        return isSchool() && exists(/databases/$(database)/documents/children/$(resource.data.childId)) &&
+               get(/databases/$(database)/documents/children/$(resource.data.childId)).data.schoolName == 
+               get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organization?.id;
+      }
+      
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && (isParent() || isAuthority() || isAdmin());
+      allow update: if isSignedIn() && (isCreator() || isAuthority() || isAdmin());
+      allow delete: if isSignedIn() && (isCreator() || isAdmin());
+    }
+    
+    // Activities collection
+    match /activities/{activityId} {
+      allow read: if isSignedIn() && (
+        request.auth.uid == resource.data.userId || 
+        isAdmin() || 
+        (isAuthority() && resource.data.type == 'alert')
+      );
+      allow create: if isSignedIn();
+      allow update: if isAdmin();
+      allow delete: if isAdmin();
+    }
+    
+    // Resources collection
+    match /resources/{resourceId} {
+      allow read: if isSignedIn();
+      allow create, update, delete: if isSignedIn() && (isAdmin() || isAuthority());
+    }
+    
+    // Settings collection
+    match /settings/{settingId} {
+      allow read: if isSignedIn();
+      allow write: if isAdmin();
+    }
+    
+    // Schools collection
+    match /schools/{schoolId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isSignedIn() && (
+        isAdmin() || 
+        (isSchool() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organization?.id == schoolId)
+      );
+      allow delete: if isAdmin();
+    }
+    
+    // Authorities collection
+    match /authorities/{authorityId} {
+      allow read: if isSignedIn();
+      allow create: if isAdmin();
+      allow update: if isSignedIn() && (
+        isAdmin() || 
+        (isAuthority() && get(/databases/$(database)/documents/users/$(request.auth.uid)).data.organization?.id == authorityId)
+      );
+      allow delete: if isAdmin();
+    }
+  }
+}

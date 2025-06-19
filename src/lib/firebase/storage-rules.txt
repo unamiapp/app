@@ -1,0 +1,70 @@
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    // Common functions
+    function isSignedIn() {
+      return request.auth != null;
+    }
+    
+    function isOwner(userId) {
+      return request.auth.uid == userId;
+    }
+    
+    function hasRole(role) {
+      return request.auth.token.role == role;
+    }
+    
+    function isAdmin() {
+      return hasRole('admin');
+    }
+    
+    function isParent() {
+      return hasRole('parent');
+    }
+    
+    function isAuthority() {
+      return hasRole('authority');
+    }
+    
+    // Child images
+    match /child-images/{userId}-{timestamp}-{filename} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && 
+                     request.resource.size < 5 * 1024 * 1024 && // 5MB max
+                     request.resource.contentType.matches('image/.*');
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && (isOwner(userId) || isAdmin());
+    }
+    
+    // Alert images
+    match /alert-images/{userId}-{timestamp}-{filename} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && 
+                     request.resource.size < 10 * 1024 * 1024 && // 10MB max
+                     request.resource.contentType.matches('image/.*');
+      allow update, delete: if isSignedIn() && (isOwner(userId) || isAuthority() || isAdmin());
+    }
+    
+    // User profile images
+    match /profile-images/{userId}-{timestamp}-{filename} {
+      allow read: if isSignedIn();
+      allow create: if isSignedIn() && isOwner(userId) && 
+                     request.resource.size < 2 * 1024 * 1024 && // 2MB max
+                     request.resource.contentType.matches('image/.*');
+      allow update: if isSignedIn() && isOwner(userId);
+      allow delete: if isSignedIn() && (isOwner(userId) || isAdmin());
+    }
+    
+    // Resource documents and images
+    match /resources/{filename} {
+      allow read: if isSignedIn();
+      allow write: if isSignedIn() && (isAdmin() || isAuthority());
+    }
+    
+    // Catch-all rule - restrict default access
+    match /{allPaths=**} {
+      allow read: if isAdmin();
+      allow write: if isAdmin();
+    }
+  }
+}

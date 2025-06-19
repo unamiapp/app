@@ -1,0 +1,10 @@
+User-agent: *
+Allow: /
+
+# Disallow admin and sensitive routes
+Disallow: /dashboard/admin/
+Disallow: /api/auth/
+Disallow: /api/users/
+
+# Sitemap
+Sitemap: https://www.uncip.app/sitemap.xml
