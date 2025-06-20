@@ -17,6 +17,7 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
   const [childrenCount, setChildrenCount] = useState(0);
   const [childrenChange, setChildrenChange] = useState('0%');
   const [childrenChangeType, setChildrenChangeType] = useState<'increase' | 'decrease' | 'neutral'>('neutral');
+  const [activeAlertsCount, setActiveAlertsCount] = useState(0);
   
   useEffect(() => {
     if (role === 'admin') {
@@ -34,6 +35,26 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
         }
       });
     }
+    
+    // Fetch active alerts count for all dashboards
+    const fetchAlerts = async () => {
+      try {
+        const response = await fetch('/api/debug/alerts');
+        if (response.ok) {
+          const data = await response.json();
+          // Count alerts with status 'active' (case insensitive)
+          const activeAlerts = (data.alerts || []).filter((alert: any) => 
+            (alert.status?.toLowerCase() === 'active') || !alert.status
+          );
+          console.log(`DashboardStats: Found ${activeAlerts.length} active alerts out of ${(data.alerts || []).length} total`);
+          setActiveAlertsCount(activeAlerts.length);
+        }
+      } catch (error) {
+        console.error('Error fetching alerts for stats:', error);
+      }
+    };
+    
+    fetchAlerts();
   }, [role, fetchUsers, getChildren]);
   
   // Get stats based on user role
@@ -90,6 +111,17 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
             </svg>
           ),
         },
+        {
+          name: 'Active Alerts',
+          value: activeAlertsCount,
+          change: '',
+          changeType: 'neutral' as const,
+          icon: (
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z" />
+            </svg>
+          ),
+        },
       ];
     }
     
@@ -107,8 +139,8 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
       },
       {
         name: 'Active Alerts',
-        value: 0,
-        change: '0%',
+        value: activeAlertsCount,
+        change: '',
         changeType: 'neutral' as const,
         icon: (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-red-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -119,7 +151,7 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
       {
         name: 'Resources',
         value: 0,
-        change: '0%',
+        change: '',
         changeType: 'neutral' as const,
         icon: (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-emerald-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -129,8 +161,8 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
       },
       {
         name: 'Reports',
-        value: 0, // Changed from hardcoded 12 to 0
-        change: '0%', // Changed from hardcoded +5.25% to 0%
+        value: 0,
+        change: '',
         changeType: 'neutral' as const,
         icon: (
           <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6 text-amber-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
@@ -140,7 +172,6 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
       },
     ];
     
-    // Return appropriate stats based on role
     // Return appropriate stats based on role
     if (role === 'admin') {
       return stats; // Return the admin stats defined earlier

@@ -2,18 +2,17 @@
 
 import { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { useChildren } from '@/hooks/useAdminSdk';
-import { useStorage } from '@/hooks/useStorage';
+// Using direct API calls instead of useChildren hook
+import PhotoUpload from '@/components/ui/PhotoUpload';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 
 export default function AddChildPage() {
   const router = useRouter();
-  const { createChild, loading } = useChildren();
-  const { uploadFile, progress } = useStorage();
+  const [loading, setLoading] = useState(false);
+  const [photoURL, setPhotoURL] = useState('');
   const { userProfile } = useAuth();
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -40,10 +39,8 @@ export default function AddChildPage() {
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setPhotoFile(e.target.files[0]);
-    }
+  const handlePhotoChange = (url: string) => {
+    setPhotoURL(url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -55,22 +52,7 @@ export default function AddChildPage() {
         throw new Error('User not authenticated');
       }
       
-      let photoURL = '';
-      
-      // If there's a photo, upload it first
-      if (photoFile) {
-        try {
-          const fileName = `${userProfile.id}-${Date.now()}-${photoFile.name}`;
-          photoURL = await uploadFile(
-            photoFile, 
-            `child-images/${fileName}`
-          );
-          console.log("Photo uploaded successfully:", photoURL);
-        } catch (error) {
-          console.error('Error uploading photo:', error);
-          toast.error('Failed to upload photo, but will continue creating child profile.');
-        }
-      }
+      // photoURL is already set by the PhotoUpload component
       
       // Create child profile data
       const childData = {
@@ -101,11 +83,29 @@ export default function AddChildPage() {
         },
       };
       
-      // Create the child profile using our Firebase Admin SDK solution
-      await createChild(childData);
+      // Create the child profile using debug API directly
+      setLoading(true);
+      const response = await fetch('/api/debug/children', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(childData),
+      });
       
-      toast.success('Child profile created successfully!');
-      router.push('/dashboard/parent/children');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to create child profile');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Child profile created successfully!');
+        router.push('/dashboard/parent/children');
+      } else {
+        throw new Error(result.message || 'Failed to create child profile');
+      }
     } catch (error) {
       console.error('Error creating child profile:', error);
       toast.error('Failed to create child profile. Please try again.');
@@ -241,54 +241,14 @@ export default function AddChildPage() {
 
                 {/* Photo upload field */}
                 <div className="sm:col-span-6">
-                  <label htmlFor="photo" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="photo" className="block text-sm font-medium text-gray-700 mb-2">
                     Photo (optional)
                   </label>
-                  <div className="mt-1 flex items-center">
-                    {photoFile ? (
-                      <div className="relative">
-                        <img
-                          src={URL.createObjectURL(photoFile)}
-                          alt="Preview"
-                          className="h-32 w-32 rounded-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setPhotoFile(null)}
-                          className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ) : (
-                      <div className="h-32 w-32 rounded-full bg-gray-200 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="ml-5">
-                      <div className="relative bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm flex items-center cursor-pointer hover:bg-gray-50 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                        <label
-                          htmlFor="photo-upload"
-                          className="relative text-sm font-medium text-gray-700 pointer-events-none"
-                        >
-                          <span>Upload a file</span>
-                          <span className="sr-only"> photo</span>
-                        </label>
-                        <input
-                          id="photo-upload"
-                          name="photo-upload"
-                          type="file"
-                          accept="image/*"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          onChange={handlePhotoChange}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  <PhotoUpload
+                    onPhotoChange={handlePhotoChange}
+                    path="child-photos"
+                    className="h-32 w-32"
+                  />
                 </div>
               </div>
             </div>

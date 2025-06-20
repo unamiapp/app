@@ -6,20 +6,29 @@ import { useAuth } from '@/hooks/useAuth';
 import { useFirestore } from '@/hooks/useFirestore';
 import { useNotifications } from '@/hooks/useNotifications';
 import { ChildProfile } from '@/types/child';
-import { MissingChildAlert } from '@/types/child';
+import { ChildAlert } from '@/types/child';
 
 export default function MissingChildForm() {
   const [children, setChildren] = useState<ChildProfile[]>([]);
   const [loading, setLoading] = useState(true);
   const [isSubmitting, setIsSubmitting] = useState(false);
   
-  const { register, handleSubmit, watch, formState: { errors } } = useForm<Partial<MissingChildAlert> & { childId: string }>();
+  interface FormData {
+    childId: string;
+    lastSeenAddress: string;
+    lastSeenDate: string;
+    lastSeenTime?: string;
+    lastSeenWearing: string;
+    additionalDetails?: string;
+  }
+  
+  const { register, handleSubmit, watch, formState: { errors } } = useForm<FormData>();
   const selectedChildId = watch('childId');
   
   const router = useRouter();
   const { user } = useAuth();
-  const { queryDocuments, createDocument, where } = useFirestore();
-  const { createNotification } = useNotifications();
+  const { queryDocuments, addDocument, where } = useFirestore();
+  // const { createNotification } = useNotifications();
 
   useEffect(() => {
     const fetchChildren = async () => {
@@ -46,7 +55,7 @@ export default function MissingChildForm() {
 
   const selectedChild = children.find(child => child.id === selectedChildId);
 
-  const onSubmit = async (data: Partial<MissingChildAlert> & { childId: string }) => {
+  const onSubmit = async (data: FormData) => {
     if (!user) {
       toast.error('You must be logged in to report a missing child');
       return;
@@ -63,36 +72,28 @@ export default function MissingChildForm() {
       const alertId = `alert_${selectedChild.id}_${Date.now()}`;
       const dateReported = new Date().toISOString();
       
-      const alertData: MissingChildAlert = {
+      const alertData: ChildAlert = {
         id: alertId,
-        childId: selectedChild.id,
-        reporterId: user.uid,
-        status: 'active',
-        dateReported,
-        lastSeenLocation: {
-          address: data.lastSeenLocation?.address,
-          latitude: data.lastSeenLocation?.latitude,
-          longitude: data.lastSeenLocation?.longitude,
-          timestamp: data.lastSeenLocation?.timestamp || dateReported,
+        childId: selectedChild.id!,
+        childName: `${selectedChild.firstName} ${selectedChild.lastName}`,
+        childAge: calculateAge(selectedChild.dateOfBirth),
+        childPhoto: selectedChild.photoURL,
+        lastSeen: {
+          date: data.lastSeenDate || dateReported,
+          location: data.lastSeenAddress || '',
+          description: data.lastSeenWearing || '',
         },
-        lastSeenWearing: data.lastSeenWearing,
-        additionalDetails: data.additionalDetails,
+        status: 'active',
+        createdBy: user.uid,
+        createdAt: dateReported,
+        updatedAt: dateReported,
+        contactInfo: selectedChild.medicalInfo?.emergencyContact?.phone || user.email || '',
       };
       
-      await createDocument('alerts', alertId, alertData);
+      await addDocument('alerts', alertData);
       
-      // Create notifications for authorities
-      await createNotification({
-        userId: 'authorities', // This would be replaced with actual authority IDs in a real system
-        title: 'URGENT: Missing Child Alert',
-        message: `${selectedChild.firstName} ${selectedChild.lastName}, age ${calculateAge(selectedChild.dateOfBirth)}, has been reported missing.`,
-        type: 'alert',
-        read: false,
-        data: {
-          alertId,
-          childId: selectedChild.id,
-        }
-      });
+      // TODO: Create notifications for authorities
+      // This would be implemented when the notification system is fully set up
       
       toast.success('Missing child alert created successfully');
       router.push('/dashboard/parent/report/confirmation');
@@ -225,28 +226,13 @@ export default function MissingChildForm() {
                   <dt className="text-sm font-medium text-gray-500">Gender</dt>
                   <dd className="mt-1 text-sm text-gray-900 capitalize">{selectedChild.gender}</dd>
                 </div>
-                {selectedChild.school?.name && (
+                {selectedChild.schoolName && (
                   <div className="sm:col-span-1">
                     <dt className="text-sm font-medium text-gray-500">School</dt>
-                    <dd className="mt-1 text-sm text-gray-900">{selectedChild.school.name}</dd>
+                    <dd className="mt-1 text-sm text-gray-900">{selectedChild.schoolName}</dd>
                   </div>
                 )}
-                {selectedChild.physicalAttributes && (
-                  <>
-                    {selectedChild.physicalAttributes.height && (
-                      <div className="sm:col-span-1">
-                        <dt className="text-sm font-medium text-gray-500">Height</dt>
-                        <dd className="mt-1 text-sm text-gray-900">{selectedChild.physicalAttributes.height} cm</dd>
-                      </div>
-                    )}
-                    {selectedChild.physicalAttributes.weight && (
-                      <div className="sm:col-span-1">
-                        <dt className="text-sm font-medium text-gray-500">Weight</dt>
-                        <dd className="mt-1 text-sm text-gray-900">{selectedChild.physicalAttributes.weight} kg</dd>
-                      </div>
-                    )}
-                  </>
-                )}
+
               </div>
             </div>
 
@@ -266,12 +252,12 @@ export default function MissingChildForm() {
                     <input
                       type="text"
                       id="lastSeenAddress"
-                      {...register('lastSeenLocation.address', { required: 'Last seen location is required' })}
-                      className={`input ${errors.lastSeenLocation?.address ? 'border-red-300 focus:ring-red-500' : ''}`}
+                      {...register('lastSeenAddress', { required: 'Last seen location is required' })}
+                      className={`input ${errors.lastSeenAddress ? 'border-red-300 focus:ring-red-500' : ''}`}
                       placeholder="e.g. Corner of Main St and Park Ave, or Sunshine Mall"
                     />
-                    {errors.lastSeenLocation?.address && (
-                      <p className="mt-2 text-sm text-red-600">{errors.lastSeenLocation.address.message}</p>
+                    {errors.lastSeenAddress && (
+                      <p className="mt-2 text-sm text-red-600">{errors.lastSeenAddress.message}</p>
                     )}
                   </div>
                 </div>
@@ -284,12 +270,12 @@ export default function MissingChildForm() {
                     <input
                       type="date"
                       id="lastSeenDate"
-                      {...register('lastSeenLocation.timestamp', { required: 'Date last seen is required' })}
-                      className={`input ${errors.lastSeenLocation?.timestamp ? 'border-red-300 focus:ring-red-500' : ''}`}
+                      {...register('lastSeenDate', { required: 'Date last seen is required' })}
+                      className={`input ${errors.lastSeenDate ? 'border-red-300 focus:ring-red-500' : ''}`}
                       max={new Date().toISOString().split('T')[0]}
                     />
-                    {errors.lastSeenLocation?.timestamp && (
-                      <p className="mt-2 text-sm text-red-600">{errors.lastSeenLocation.timestamp.message}</p>
+                    {errors.lastSeenDate && (
+                      <p className="mt-2 text-sm text-red-600">{errors.lastSeenDate.message}</p>
                     )}
                   </div>
                 </div>

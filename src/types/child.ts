@@ -33,19 +33,35 @@ export interface ChildProfile {
 export interface ChildAlert {
   id: string;
   childId: string;
-  childName: string;
-  childAge: number;
+  childName?: string;
+  childAge?: number;
   childPhoto?: string;
-  lastSeen: {
+  // Support both nested and flat structures for backward compatibility
+  lastSeen?: {
     date: string;
+    time?: string;
     location: string;
     description: string;
   };
-  status: 'active' | 'resolved' | 'cancelled';
+  // Legacy flat fields
+  lastSeenLocation?: string;
+  lastSeenWearing?: string;
+  lastSeenDate?: string;
+  // Alert type can be stored in either field
+  alertType?: string;
+  type?: string;
+  description?: string;
+  // Additional fields from existing alerts
+  clothingDescription?: string;
+  contactPhone?: string;
+  additionalInfo?: string;
+  status: 'active' | 'resolved' | 'cancelled' | 'false';
+  contactInfo?: string;
   createdBy: string;
   createdAt: string;
   updatedAt: string;
   resolvedAt?: string;
   resolvedBy?: string;
   resolutionDetails?: string;
+  attachments?: string[];
 }

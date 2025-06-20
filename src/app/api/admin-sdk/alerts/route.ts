@@ -2,12 +2,13 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth';
 import { authOptions } from '@/lib/auth';
 import * as admin from 'firebase-admin';
+import { extractUserId, extractUserRole } from '@/lib/utils/sessionUtils';
 
 // Initialize Firebase Admin SDK if not already initialized
 if (!admin.apps.length) {
   try {
     const privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY 
-      ? process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g, '\n') 
+      ? process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\\\n/g, '\\n') 
       : undefined;
     
     admin.initializeApp({
@@ -33,15 +34,27 @@ export async function POST(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
+    const userId = extractUserId(session.user);
     const data = await request.json();
     
+    // Ensure data has the correct structure
     const alertData = {
       ...data,
       createdBy: userId,
       createdAt: new Date().toISOString(),
       updatedAt: new Date().toISOString(),
-      status: 'active'
+      status: 'active',
+      // Ensure lastSeen is properly structured
+      lastSeen: data.lastSeen || {
+        date: data.lastSeenDate || new Date().toISOString().split('T')[0],
+        time: data.lastSeenTime || new Date().toTimeString().slice(0, 5),
+        location: data.lastSeenLocation || '',
+        description: data.lastSeenWearing || ''
+      },
+      // Include all fields from the database structure
+      clothingDescription: data.clothingDescription || data.lastSeenWearing || '',
+      contactPhone: data.contactPhone || data.contactInfo || '',
+      additionalInfo: data.additionalInfo || data.description || ''
     };
 
     const docRef = await adminDb.collection('alerts').add(alertData);
@@ -65,14 +78,27 @@ export async function GET(request: NextRequest) {
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
-    const userId = (session.user as any).id;
-    const userRole = ((session.user as any).role || '').toLowerCase();
+    const userId = extractUserId(session.user);
+    const userRole = extractUserRole(session.user);
     
     let alertsQuery: admin.firestore.Query = adminDb.collection('alerts');
     
     // Filter alerts based on role
     if (userRole === 'parent') {
-      alertsQuery = alertsQuery.where('createdBy', '==', userId);
+      // For parents, first get their children
+      const childrenSnapshot = await adminDb
+        .collection('children')
+        .where('guardians', 'array-contains', userId)
+        .get();
+      
+      const childIds = childrenSnapshot.docs.map(doc => doc.id);
+      
+      if (childIds.length > 0) {
+        alertsQuery = alertsQuery.where('childId', 'in', childIds);
+      } else {
+        // If no children found, just filter by createdBy
+        alertsQuery = alertsQuery.where('createdBy', '==', userId);
+      }
     }
     
     const alertsSnapshot = await alertsQuery.orderBy('createdAt', 'desc').get();

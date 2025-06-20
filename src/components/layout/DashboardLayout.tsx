@@ -4,6 +4,8 @@ import { useState, useEffect } from 'react';
 import { useRouter, usePathname } from 'next/navigation';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
+import Footer from './Footer';
+import UserProfilePhoto from '@/components/profile/UserProfilePhoto';
 
 interface DashboardLayoutProps {
   children: React.ReactNode;
@@ -171,16 +173,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="mt-auto flex-shrink-0 flex border-t border-indigo-800 p-4 sticky bottom-0 bg-indigo-700">
               <div className="flex items-center w-full">
                 <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-                    {userProfile?.displayName?.charAt(0) || 'U'}
-                  </div>
+                  <UserProfilePhoto
+                    photoURL={userProfile?.photoURL}
+                    displayName={userProfile?.displayName || 'User'}
+                    size="md"
+                  />
                 </div>
                 <div className="ml-3 flex-1">
                   <p className="text-base font-medium text-white truncate">
                     {userProfile?.displayName || 'User'}
                   </p>
                   <p className="text-sm font-medium text-indigo-200 truncate">
-                    {userProfile?.role?.charAt(0).toUpperCase() + userProfile?.role?.slice(1) || 'User'}
+                    {userProfile?.role ? (userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)) : 'User'}
                   </p>
                 </div>
                 <button
@@ -232,16 +236,18 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             <div className="mt-auto flex-shrink-0 flex border-t border-indigo-800 p-4 sticky bottom-0 bg-indigo-700">
               <div className="flex items-center w-full">
                 <div className="flex-shrink-0">
-                  <div className="h-10 w-10 rounded-full bg-indigo-600 flex items-center justify-center text-white">
-                    {userProfile?.displayName?.charAt(0) || 'U'}
-                  </div>
+                  <UserProfilePhoto
+                    photoURL={userProfile?.photoURL}
+                    displayName={userProfile?.displayName || 'User'}
+                    size="md"
+                  />
                 </div>
                 <div className="ml-3 flex-1">
                   <p className="text-sm font-medium text-white truncate">
                     {userProfile?.displayName || 'User'}
                   </p>
                   <p className="text-xs font-medium text-indigo-200 truncate">
-                    {userProfile?.role?.charAt(0).toUpperCase() + userProfile?.role?.slice(1) || 'User'}
+                    {userProfile?.role ? (userProfile.role.charAt(0).toUpperCase() + userProfile.role.slice(1)) : 'User'}
                   </p>
                 </div>
                 <button
@@ -261,7 +267,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       </div>
 
       {/* Main content */}
-      <div className="md:pl-64 flex flex-col flex-1">
+      <div className="md:pl-64 flex flex-col flex-1 min-h-screen">
         <div className="sticky top-0 z-10 md:hidden pl-1 pt-1 sm:pl-3 sm:pt-3 bg-white shadow-sm border-b border-gray-200">
           <button
             type="button"
@@ -278,11 +284,15 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
           </div>
         </div>
         
-        <main className="flex-1">
-          <div className="py-6">
-            {children}
-          </div>
-        </main>
+        <div className="flex flex-col flex-1">
+          <main className="flex-1">
+            <div className="py-6">
+              {children}
+            </div>
+          </main>
+          
+          <Footer />
+        </div>
       </div>
     </div>
   );

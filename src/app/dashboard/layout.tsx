@@ -107,6 +107,7 @@ export default function DashboardLayout({
           { name: 'Children', href: '/dashboard/parent/children' },
           { name: 'Alerts', href: '/dashboard/parent/alerts' },
           { name: 'Report', href: '/dashboard/parent/report' },
+          { name: 'Profile', href: '/dashboard/parent/profile' },
         ];
       case 'admin':
         return [
@@ -115,6 +116,7 @@ export default function DashboardLayout({
           { name: 'Alerts', href: '/dashboard/admin/alerts' },
           { name: 'Reports', href: '/dashboard/admin/reports' },
           { name: 'Settings', href: '/dashboard/admin/settings' },
+          { name: 'Profile', href: '/dashboard/admin/profile' },
         ];
       case 'authority':
         return [
@@ -122,18 +124,21 @@ export default function DashboardLayout({
           { name: 'Alerts', href: '/dashboard/authority/alerts' },
           { name: 'Search', href: '/dashboard/authority/search' },
           { name: 'Reports', href: '/dashboard/authority/reports' },
+          { name: 'Profile', href: '/dashboard/authority/profile' },
         ];
       case 'school':
         return [
           { name: 'Dashboard', href: '/dashboard/school' },
           { name: 'Students', href: '/dashboard/school/students' },
           { name: 'Alerts', href: '/dashboard/school/alerts' },
+          { name: 'Profile', href: '/dashboard/school/profile' },
         ];
       case 'community':
         return [
           { name: 'Dashboard', href: '/dashboard/community' },
           { name: 'Alerts', href: '/dashboard/community/alerts' },
           { name: 'Resources', href: '/dashboard/community/resources' },
+          { name: 'Profile', href: '/dashboard/community/profile' },
         ];
       default:
         return [];
@@ -169,16 +174,20 @@ export default function DashboardLayout({
         {/* User profile at the bottom of sidebar */}
         <div className="border-t border-slate-200 p-4">
           <div className="flex items-center space-x-3">
-            <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-              {userProfile?.displayName?.[0]?.toUpperCase() || 'U'}
-            </div>
+            <Link href={`/dashboard/${userRole}/profile`} className="flex-shrink-0">
+              <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                {userProfile?.displayName?.[0]?.toUpperCase() || 'U'}
+              </div>
+            </Link>
             <div className="flex-1 min-w-0">
-              <p className="text-sm font-medium text-slate-900 truncate">
-                {userProfile?.displayName || 'User'}
-              </p>
-              <p className="text-xs text-slate-500 truncate">
-                {userProfile?.role || 'Guest'}
-              </p>
+              <Link href={`/dashboard/${userRole}/profile`} className="block">
+                <p className="text-sm font-medium text-slate-900 truncate">
+                  {userProfile?.displayName || 'User'}
+                </p>
+                <p className="text-xs text-slate-500 truncate">
+                  {userProfile?.role || 'Guest'}
+                </p>
+              </Link>
             </div>
             <button
               onClick={handleLogout}
@@ -247,7 +256,7 @@ export default function DashboardLayout({
               
               {/* User info in mobile menu */}
               <div className="mt-4 border-t border-slate-200 pt-4 px-4">
-                <div className="flex items-center">
+                <Link href={`/dashboard/${userRole}/profile`} className="flex items-center" onClick={() => setMobileMenuOpen(false)}>
                   <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
                     {userProfile?.displayName?.[0]?.toUpperCase() || 'U'}
                   </div>
@@ -259,7 +268,7 @@ export default function DashboardLayout({
                       {userProfile?.role || 'Guest'}
                     </p>
                   </div>
-                </div>
+                </Link>
               </div>
             </nav>
           </div>

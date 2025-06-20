@@ -5,8 +5,7 @@ import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { useRouter } from 'next/navigation';
 import { useAuth } from '@/hooks/useAuth';
-import { useStorage } from '@/hooks/useStorage';
-import { useChildProfiles, CreateChildData } from '@/hooks/useChildProfiles';
+import PhotoUpload from '@/components/ui/PhotoUpload';
 import { ChildProfile } from '@/types/child';
 
 interface ChildProfileFormProps {
@@ -15,13 +14,10 @@ interface ChildProfileFormProps {
 }
 
 export default function ChildProfileForm({ initialData, isEditing = false }: ChildProfileFormProps) {
-  const { user, userProfile } = useAuth();
-  const { uploadFile } = useStorage();
-  const { createChild, updateChild } = useChildProfiles();
+  const { userProfile } = useAuth();
   const router = useRouter();
   const [isLoading, setIsLoading] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
-  const [photoPreview, setPhotoPreview] = useState<string | null>(initialData?.photoURL || null);
+  const [photoURL, setPhotoURL] = useState<string>(initialData?.photoURL || '');
 
   const {
     register,
@@ -31,74 +27,79 @@ export default function ChildProfileForm({ initialData, isEditing = false }: Chi
     defaultValues: initialData || {},
   });
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (file) {
-      setPhotoFile(file);
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        setPhotoPreview(reader.result as string);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
   const onSubmit = async (data: Partial<ChildProfile>) => {
-    if (!user || !userProfile) {
+    if (!userProfile) {
       toast.error('You must be logged in to perform this action');
       return;
     }
 
     setIsLoading(true);
     try {
-      let photoURL = initialData?.photoURL || '';
-
-      // Upload photo if a new one was selected
-      if (photoFile) {
-        try {
-          photoURL = await uploadFile(photoFile, 'child-images');
-          console.log('Photo uploaded successfully:', photoURL);
-        } catch (uploadError) {
-          console.error('Error uploading photo:', uploadError);
-          toast.error('Photo upload failed, but profile will be saved without photo');
-          // Don't return - continue with form submission
-          photoURL = initialData?.photoURL || ''; // Keep existing photo or empty
-        }
-      }
-
       // Prepare child data
-      const childData: CreateChildData = {
+      const childData = {
         firstName: data.firstName || '',
         lastName: data.lastName || '',
         dateOfBirth: data.dateOfBirth || new Date().toISOString().split('T')[0],
         gender: (data.gender as 'male' | 'female' | 'other') || 'other',
-        photoURL: photoURL || undefined,
+        photoURL: photoURL || '',
         guardians: initialData?.guardians || [userProfile.id],
-        identificationNumber: data.identificationNumber,
-        schoolName: data.schoolName,
-        address: data.address,
-        medicalInfo: data.medicalInfo
+        identificationNumber: data.identificationNumber || '',
+        schoolName: data.schoolName || '',
+        address: data.address || {
+          street: '',
+          city: '',
+          province: '',
+          postalCode: ''
+        }
       };
 
       console.log('Submitting child data:', childData);
 
+      let response;
+      
       if (isEditing && initialData?.id) {
-        // Update existing child profile
-        await updateChild(initialData.id, childData);
-        toast.success('Child profile updated successfully');
+        // Update existing child profile using debug API
+        response = await fetch(`/api/debug/children?id=${initialData.id}`, {
+          method: 'PUT',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(childData),
+        });
       } else {
-        // Create new child profile
-        await createChild(childData);
-        toast.success('Child profile created successfully');
+        // Create new child profile using debug API
+        response = await fetch('/api/debug/children', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(childData),
+        });
       }
 
-      router.push('/dashboard/parent/children');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to save child profile');
+      }
+
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success(isEditing ? 'Child profile updated successfully' : 'Child profile created successfully');
+        router.push('/dashboard/parent/children');
+      } else {
+        throw new Error(result.message || 'Failed to save child profile');
+      }
     } catch (error: any) {
       console.error('Error saving child profile:', error);
-      toast.error('Failed to create child profile. Please try again.');
+      toast.error(error.message || 'Failed to save child profile. Please try again.');
     } finally {
       setIsLoading(false);
     }
+  };
+
+  const handlePhotoChange = (url: string) => {
+    setPhotoURL(url);
   };
 
   return (
@@ -171,53 +172,13 @@ export default function ChildProfileForm({ initialData, isEditing = false }: Chi
             )}
           </div>
 
-          <div className="md:col-span-2">
-            <label className="block text-sm font-medium text-gray-700">Photo</label>
-            <div className="mt-1 flex items-center">
-              {photoPreview ? (
-                <div className="relative">
-                  <img
-                    src={photoPreview}
-                    alt="Child photo preview"
-                    className="h-32 w-32 rounded-full object-cover"
-                  />
-                  <button
-                    type="button"
-                    className="absolute top-0 right-0 bg-white rounded-full p-1 shadow-sm"
-                    onClick={() => {
-                      setPhotoFile(null);
-                      setPhotoPreview(null);
-                    }}
-                  >
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 text-gray-500" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                    </svg>
-                  </button>
-                </div>
-              ) : (
-                <div className="h-32 w-32 rounded-full bg-gray-100 flex items-center justify-center">
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-300" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                  </svg>
-                </div>
-              )}
-              <div className="ml-5">
-                <label
-                  htmlFor="photo-upload"
-                  className="cursor-pointer bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm text-sm leading-4 font-medium text-gray-700 hover:bg-gray-50"
-                >
-                  Change
-                </label>
-                <input
-                  id="photo-upload"
-                  name="photo"
-                  type="file"
-                  accept="image/*"
-                  className="sr-only"
-                  onChange={handlePhotoChange}
-                />
-              </div>
-            </div>
+          <div className="md:col-span-2 flex justify-center">
+            <PhotoUpload
+              initialPhotoURL={initialData?.photoURL}
+              onPhotoChange={handlePhotoChange}
+              path="child-photos"
+              className="h-32 w-32"
+            />
           </div>
         </div>
       </div>

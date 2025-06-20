@@ -2,7 +2,7 @@
 
 import React, { useState, useEffect, createContext, useContext } from 'react';
 import { useRouter } from 'next/navigation';
-import { signIn, signOut, useSession, update } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 import { UserProfile, UserRole } from '@/types/user';
 import { auth } from '@/lib/firebase/config';
 import { signInWithEmailAndPassword, GoogleAuthProvider, signInWithPopup, createUserWithEmailAndPassword, updateProfile, sendPasswordResetEmail } from 'firebase/auth';
@@ -34,24 +34,68 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
     }
 
     if (session?.user) {
-      // Create a user profile from session data
-      const profile: UserProfile = {
-        id: (session.user as any).id || 'unknown',
-        email: session.user.email || '',
-        displayName: session.user.name || '',
-        photoURL: session.user.image || undefined,
-        role: (session.user as any).role || 'parent',
-        createdAt: new Date().toISOString(),
-        updatedAt: new Date().toISOString(),
-        isActive: true,
+      // Try to fetch user profile from API
+      const fetchUserProfile = async () => {
+        try {
+          const userId = (session.user as any).id || (session.user as any).uid;
+          if (!userId) {
+            throw new Error('User ID not found');
+          }
+          
+          // Try to fetch from debug API first
+          const response = await fetch(`/api/debug/users?id=${userId}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success && data.user) {
+              setUserProfile({
+                ...data.user,
+                role: (session.user as any).role || data.user.role || 'parent'
+              });
+              setLoading(false);
+              return;
+            }
+          }
+          
+          // Fallback to session data
+          const profile: UserProfile = {
+            id: userId,
+            email: session.user.email || '',
+            displayName: session.user.name || '',
+            photoURL: session.user.image || undefined,
+            role: (session.user as any).role || 'parent',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            isActive: true,
+          };
+          
+          setUserProfile(profile);
+        } catch (error) {
+          console.error('Error fetching user profile:', error);
+          
+          // Fallback to session data
+          const profile: UserProfile = {
+            id: (session.user as any).id || 'unknown',
+            email: session.user.email || '',
+            displayName: session.user.name || '',
+            photoURL: session.user.image || undefined,
+            role: (session.user as any).role || 'parent',
+            createdAt: new Date().toISOString(),
+            updatedAt: new Date().toISOString(),
+            isActive: true,
+          };
+          
+          setUserProfile(profile);
+        } finally {
+          setLoading(false);
+        }
       };
       
-      setUserProfile(profile);
+      fetchUserProfile();
     } else {
       setUserProfile(null);
+      setLoading(false);
     }
-    
-    setLoading(false);
   }, [session, status, router]);
 
   const signUpUser = async (email: string, password: string, displayName: string, role: UserRole) => {

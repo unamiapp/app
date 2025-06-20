@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Admin Alert Test</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 20px;
+    }
+    button {
+      padding: 10px 15px;
+      background-color: #0070f3;
+      color: white;
+      border: none;
+      border-radius: 4px;
+      cursor: pointer;
+    }
+    pre {
+      background-color: #f1f1f1;
+      padding: 15px;
+      border-radius: 4px;
+      overflow-x: auto;
+    }
+  </style>
+</head>
+<body>
+  <h1>Admin Alert Test</h1>
+  <p>Use this page to test the admin alert creation functionality.</p>
+  
+  <button id="test-button">Create Test Alert</button>
+  
+  <h2>Console Output:</h2>
+  <pre id="console-output">Click the button to run the test...</pre>
+  
+  <script>
+    // Override console.log to display in the page
+    const originalConsoleLog = console.log;
+    const originalConsoleError = console.error;
+    const outputElement = document.getElementById('console-output');
+    
+    console.log = function(...args) {
+      originalConsoleLog.apply(console, args);
+      outputElement.textContent += '\n' + args.map(arg => 
+        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+      ).join(' ');
+    };
+    
+    console.error = function(...args) {
+      originalConsoleError.apply(console, args);
+      outputElement.textContent += '\n[ERROR] ' + args.map(arg => 
+        typeof arg === 'object' ? JSON.stringify(arg, null, 2) : arg
+      ).join(' ');
+    };
+  </script>
+  
+  <script src="/test-admin-alert.js"></script>
+</body>
+</html>

@@ -126,7 +126,7 @@ export const useChildProfiles = () => {
     
     const setupSubscription = async () => {
       try {
-        let constraints = [];
+        let constraints: any[] = [];
         
         if (userProfile.role === 'parent') {
           constraints = [whereArrayContains('guardians', userProfile.id)];

@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { adminDb } from '@/lib/firebase/admin';
+import { extractUserId, extractUserRole } from '@/lib/utils/sessionUtils';
 
 // GET /api/alerts/[id] - Get a specific alert
 export async function GET(
@@ -14,8 +15,9 @@ export async function GET(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const userId = (session.user as any).id;
-    const userRole = (session.user as any).role || 'parent';
+    // Extract user ID and role from session using utility functions
+    const userId = extractUserId(session.user);
+    const userRole = extractUserRole(session.user);
     const alertId = params.id;
     
     // Get the alert document
@@ -32,7 +34,16 @@ export async function GET(
       // Get the child to check if this parent has access
       const childDoc = await adminDb.collection('children').doc(alertData?.childId).get();
       
-      if (!childDoc.exists || childDoc.data()?.parentId !== userId) {
+      if (!childDoc.exists) {
+        return NextResponse.json({ error: 'Child not found' }, { status: 404 });
+      }
+      
+      // Check if user is a guardian of the child
+      const childData = childDoc.data();
+      const isGuardian = childData?.guardians && Array.isArray(childData.guardians) && 
+                         childData.guardians.includes(userId);
+      
+      if (!isGuardian) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
     } else if (userRole === 'school') {
@@ -40,8 +51,19 @@ export async function GET(
       const childDoc = await adminDb.collection('children').doc(alertData?.childId).get();
       const userDoc = await adminDb.collection('users').doc(userId).get();
       const schoolId = userDoc.data()?.schoolId;
+      const schoolName = userDoc.data()?.organization?.name || userDoc.data()?.schoolName;
       
-      if (!childDoc.exists || childDoc.data()?.schoolId !== schoolId) {
+      if (!childDoc.exists) {
+        return NextResponse.json({ error: 'Child not found' }, { status: 404 });
+      }
+      
+      const childData = childDoc.data();
+      const childSchoolId = childData?.schoolId;
+      const childSchoolName = childData?.schoolName;
+      
+      // Check if the child belongs to this school (using either ID or name)
+      if ((schoolId && childSchoolId !== schoolId) && 
+          (schoolName && childSchoolName !== schoolName)) {
         return NextResponse.json({ error: 'Unauthorized' }, { status: 403 });
       }
     }
@@ -68,8 +90,9 @@ export async function PUT(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const userId = (session.user as any).id;
-    const userRole = (session.user as any).role || 'parent';
+    // Extract user ID and role from session using utility functions
+    const userId = extractUserId(session.user);
+    const userRole = extractUserRole(session.user);
     const alertId = params.id;
     
     // Get the alert document
@@ -126,7 +149,9 @@ export async function DELETE(
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
     
-    const userRole = (session.user as any).role || 'parent';
+    // Extract user ID and role from session using utility functions
+    const userId = extractUserId(session.user);
+    const userRole = extractUserRole(session.user);
     const alertId = params.id;
     
     // Only admins can delete alerts

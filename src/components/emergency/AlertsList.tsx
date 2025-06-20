@@ -4,10 +4,11 @@ import { useState, useEffect, useRef } from 'react';
 import Link from 'next/link';
 import { useAuth } from '@/hooks/useAuth';
 import { useFirestore } from '@/hooks/useFirestore';
-import { MissingChildAlert, ChildAlert } from '@/types/child';
+import { ChildAlert } from '@/types/child';
 import { ChildProfile } from '@/types/child';
 import { toast } from 'react-hot-toast';
 import { Unsubscribe } from 'firebase/firestore';
+import { normalizeAlerts } from '@/lib/utils/alertUtils';
 
 interface AlertsListProps {
   role: 'parent' | 'school' | 'authority' | 'community' | 'admin';
@@ -63,11 +64,11 @@ export default function AlertsList({ role, limit }: AlertsListProps) {
           }
           
           constraints = [whereIn('childId', childIds), orderByDesc('createdAt')];
-        } else if (role === 'school' && userProfile.schoolId) {
+        } else if (role === 'school' && userProfile.organization?.id) {
           // For schools, get children in their school
           const childrenData = await queryDocuments<ChildProfile>(
             'children',
-            [whereEqual('schoolId', userProfile.schoolId)]
+            [whereEqual('schoolName', userProfile.organization.id)]
           );
           
           const childIds = childrenData.map(child => child.id);
@@ -84,15 +85,12 @@ export default function AlertsList({ role, limit }: AlertsListProps) {
           constraints = [orderByDesc('createdAt')];
         }
         
-        // Add limit if specified
-        if (limit) {
-          constraints.push(limitTo(limit));
-        }
+        // Set up real-time listener for alerts with limit handled separately
+        const finalConstraints = limit ? [...constraints, limitTo(limit)] : constraints;
         
-        // Set up real-time listener for alerts
         unsubscribeRef.current = subscribeToCollection<ChildAlert>(
           'alerts',
-          constraints,
+          finalConstraints,
           async (alertsData) => {
             try {
               // Fetch child details for each alert
@@ -108,7 +106,7 @@ export default function AlertsList({ role, limit }: AlertsListProps) {
                 })
               );
               
-              setAlerts(alertsWithChildren);
+              setAlerts(normalizeAlerts(alertsWithChildren));
             } catch (error) {
               console.error('Error processing alerts data:', error);
               toast.error('Failed to process alerts data');
@@ -252,7 +250,7 @@ export default function AlertsList({ role, limit }: AlertsListProps) {
                     <div className="mt-1 flex items-center">
                       {getStatusBadge(alert.status)}
                       <span className="ml-2 text-sm text-gray-500">
-                        Reported {formatDate(alert.dateReported)}
+                        Reported {formatDate(alert.createdAt)}
                       </span>
                     </div>
                   </div>
@@ -268,11 +266,14 @@ export default function AlertsList({ role, limit }: AlertsListProps) {
               </div>
               <div className="mt-2">
                 <div className="text-sm text-gray-500">
-                  <span className="font-medium text-gray-700">Last seen:</span> {alert.lastSeenLocation?.address || 'Location not specified'}
+                  <span className="font-medium text-gray-700">Last seen:</span> {alert.lastSeen?.location || alert.lastSeenLocation || 'Location not specified'}
+                  {alert.lastSeen?.date && alert.lastSeen?.time && (
+                    <span className="ml-2 text-xs text-gray-500">({alert.lastSeen.date} {alert.lastSeen.time})</span>
+                  )}
                 </div>
-                {alert.lastSeenWearing && (
+                {(alert.lastSeen?.description || alert.clothingDescription || alert.lastSeenWearing) && (
                   <div className="mt-1 text-sm text-gray-500">
-                    <span className="font-medium text-gray-700">Wearing:</span> {alert.lastSeenWearing}
+                    <span className="font-medium text-gray-700">Description:</span> {alert.lastSeen?.description || alert.clothingDescription || alert.lastSeenWearing}
                   </div>
                 )}
               </div>

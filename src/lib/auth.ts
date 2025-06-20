@@ -142,9 +142,9 @@ export const authOptions: NextAuthOptions = {
         
         // Ensure roles is always an array that includes the primary role
         if ((user as any).roles && Array.isArray((user as any).roles)) {
-          token.roles = (user as any).roles;
+          token.roles = (user as any).roles || [];
           // Make sure primary role is in the roles array
-          if (!token.roles.includes(token.role)) {
+          if (Array.isArray(token.roles) && !token.roles.includes(token.role)) {
             token.roles.push(token.role);
           }
         } else {
@@ -173,6 +173,15 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
+      // Handle GitHub Codespaces URLs
+      if (url.includes('.app.github.dev')) {
+        // If it's a login callback, redirect to dashboard
+        if (url.includes('/api/auth/callback')) {
+          const urlObj = new URL(url);
+          return `${urlObj.origin}/dashboard`;
+        }
+      }
+      
       // If the URL is a dashboard URL, use it directly
       if (url.includes('/dashboard/')) {
         return url;

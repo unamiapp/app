@@ -135,7 +135,7 @@ export const useResources = () => {
   }, [fetchResources]);
 
   const subscribeToResources = useCallback(() => {
-    let constraints = [];
+    let constraints: any[] = [];
     
     // For regular users, only subscribe to published resources
     if (userProfile?.role === 'parent' || userProfile?.role === 'school' || userProfile?.role === 'community') {

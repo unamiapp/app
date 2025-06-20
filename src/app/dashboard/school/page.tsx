@@ -1,6 +1,8 @@
 'use client';
 
 import { useSession } from 'next-auth/react';
+import Link from 'next/link';
+import ActiveAlertsDashboard from '@/components/dashboard/ActiveAlertsDashboard';
 
 export default function SchoolDashboard() {
   const { data: session } = useSession();
@@ -22,6 +24,10 @@ export default function SchoolDashboard() {
         </div>
       </div>
       
+      <div className="mb-6">
+        <ActiveAlertsDashboard role="school" limit={3} />
+      </div>
+      
       <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
         <div className="bg-white shadow overflow-hidden sm:rounded-lg">
           <div className="px-4 py-5 sm:px-6">
@@ -32,6 +38,14 @@ export default function SchoolDashboard() {
           </div>
           <div className="border-t border-gray-200 px-4 py-5 sm:p-6">
             <p className="text-gray-500 italic">No students found.</p>
+            <div className="mt-4">
+              <Link 
+                href="/dashboard/school/students" 
+                className="text-sm text-blue-600 hover:text-blue-500"
+              >
+                View all students
+              </Link>
+            </div>
           </div>
         </div>
         
@@ -48,13 +62,19 @@ export default function SchoolDashboard() {
         </div>
       </div>
       
-      <div className="mt-6">
-        <a 
+      <div className="mt-6 flex space-x-4">
+        <Link 
+          href="/dashboard/school/alerts" 
+          className="text-blue-600 hover:underline"
+        >
+          View All Alerts
+        </Link>
+        <Link 
           href="/auth-debug" 
           className="text-blue-600 hover:underline"
         >
           Back to Debug Page
-        </a>
+        </Link>
       </div>
     </div>
   );

@@ -2,19 +2,24 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getToken } from 'next-auth/jwt';
 
 // Define public routes that don't require authentication
-const publicRoutes = ['/', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/error'];
+const publicRoutes = ['/', '/auth/login', '/auth/register', '/auth/forgot-password', '/auth/error', '/signin', '/api/auth/signin'];
 
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Skip middleware for static files and API routes
+  // Skip middleware for static files and most API routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/static') ||
-    pathname.startsWith('/api') ||
+    (pathname.startsWith('/api') && !pathname.startsWith('/api/auth/signin')) ||
     pathname.includes('.')
   ) {
     return NextResponse.next();
+  }
+  
+  // Handle NextAuth default signin page
+  if (pathname === '/api/auth/signin') {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   // Check if the route is public
@@ -59,8 +64,14 @@ export async function middleware(request: NextRequest) {
   }
 
   // If user is authenticated but accessing the root, redirect to their dashboard
-  if (pathname === '/') {
-    return NextResponse.redirect(new URL(`/dashboard/${userRole}`, request.url));
+  if (pathname === '/' && token) {
+    const defaultRole = userRole || 'parent';
+    return NextResponse.redirect(new URL(`/dashboard/${defaultRole}`, request.url));
+  }
+  
+  // If accessing /signin, redirect to /auth/login
+  if (pathname === '/signin') {
+    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   return NextResponse.next();

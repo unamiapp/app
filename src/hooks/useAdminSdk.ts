@@ -210,7 +210,8 @@ export const useChildren = () => {
       setLoading(true);
       setError(null);
       
-      const response = await fetch('/api/admin-sdk/children');
+      // Use the debug API that's working correctly
+      const response = await fetch('/api/debug/children');
       
       if (!response.ok) {
         const errorData = await response.json().catch(() => ({ message: 'Failed to fetch children' }));

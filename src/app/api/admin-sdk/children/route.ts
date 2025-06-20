@@ -1,33 +1,9 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import * as admin from 'firebase-admin';
+import { adminDb } from '@/lib/firebase/admin';
 
-// Initialize Firebase Admin SDK if not already initialized
-if (!admin.apps.length) {
-  try {
-    // Fix for private key format
-    const privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY 
-      ? process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY.replace(/\\n/g, '\n') 
-      : undefined;
-    
-    admin.initializeApp({
-      credential: admin.credential.cert({
-        projectId: process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID,
-        clientEmail: process.env.FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL,
-        privateKey: privateKey,
-      }),
-      storageBucket: `${process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID}.appspot.com`,
-    });
-    
-    console.log('Firebase Admin SDK initialized successfully in children API');
-  } catch (error) {
-    console.error('Firebase Admin SDK initialization error:', error);
-  }
-}
-
-// Get admin services
-const adminDb = admin.firestore();
+console.log('Children API route loaded');
 
 // POST /api/admin-sdk/children - Create a new child profile
 export async function POST(request: NextRequest) {
@@ -146,21 +122,33 @@ export async function POST(request: NextRequest) {
 // GET /api/admin-sdk/children - Get child profiles
 export async function GET(request: NextRequest) {
   try {
+    console.log('GET /api/admin-sdk/children - Starting fetch');
+    
     // Verify authentication
     const session = await getServerSession(authOptions);
+    console.log('Session:', session?.user ? {
+      id: (session.user as any).id,
+      email: session.user.email,
+      role: (session.user as any).role
+    } : 'No session');
+    
     if (!session?.user) {
+      console.log('GET /api/admin-sdk/children - Unauthorized: No session');
       return NextResponse.json({ error: 'Unauthorized' }, { status: 401 });
     }
 
     // Get user ID from session
     const userId = (session.user as any).id;
     if (!userId) {
+      console.log('GET /api/admin-sdk/children - Bad request: Invalid user session');
       return NextResponse.json({ error: 'Invalid user session' }, { status: 400 });
     }
 
     // Get user role from session
     const userRole = ((session.user as any).role || '').toLowerCase();
     const userRoles = ((session.user as any).roles || []).map((r: string) => r.toLowerCase());
+    
+    console.log('User roles:', { userRole, userRoles, userId });
     
     // Check if user has specific roles
     const isAdmin = userRole === 'admin' || userRoles.includes('admin');
@@ -177,15 +165,25 @@ export async function GET(request: NextRequest) {
     // Apply role-specific filters
     if (isParent) {
       // For parents, only show their children
+      console.log(`Filtering children for parent with ID: ${userId}`);
       queryRef = childrenRef.where('guardians', 'array-contains', userId);
     } else if (isSchool) {
       // For schools, show children associated with the school
+      console.log(`Filtering children for school with ID: ${userId}`);
       queryRef = childrenRef.where('schoolId', '==', userId);
     } else {
       // Admins and authorities can see all children
+      console.log(`Showing all children for role: ${userRole}`);
+      queryRef = childrenRef;
+    }
+    
+    // For debugging, if there's an issue with the parent filter, allow all children to be shown
+    if (isParent && request.nextUrl.searchParams.get('debug') === 'true') {
+      console.log('Debug mode: Showing all children for parent');
       queryRef = childrenRef;
     }
 
+    console.log(`Executing query for ${userRole} with ID ${userId}`);
     const snapshot = await queryRef.get();
     
     const children = snapshot.docs.map(doc => ({
@@ -193,10 +191,16 @@ export async function GET(request: NextRequest) {
       ...doc.data()
     }));
 
+    console.log(`Found ${children.length} children records`);
     return NextResponse.json({ children });
   } catch (error) {
     console.error('Error fetching children:', error);
-    return NextResponse.json({ error: 'Internal server error' }, { status: 500 });
+    // Return more detailed error information
+    return NextResponse.json({ 
+      error: 'Internal server error', 
+      message: error instanceof Error ? error.message : 'Unknown error',
+      stack: error instanceof Error ? error.stack : undefined
+    }, { status: 500 });
   }
 }
 
@@ -287,6 +291,17 @@ export async function DELETE(request: NextRequest) {
     }
 
     await adminDb.collection('children').doc(id).delete();
+    
+    // Create an audit log entry
+    await adminDb.collection('audit_logs').add({
+      userId,
+      userRole,
+      operation: 'delete_child',
+      resourceId: id,
+      resourceType: 'children',
+      timestamp: new Date().toISOString(),
+      details: `Deleted child profile with ID: ${id}`
+    });
 
     return NextResponse.json({ success: true });
   } catch (error) {

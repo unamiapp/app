@@ -25,29 +25,9 @@ export default function LoginPage() {
     formState: { errors },
   } = useForm<LoginFormData>();
   
-  // Helper functions to pre-fill credentials for different roles
-  const fillAdminCredentials = () => {
-    setValue('email', 'info@unamifoundation.org');
-    setValue('password', 'Proof321#');
-    setValue('role', 'admin');
-  };
-  
-  const fillParentCredentials = () => {
-    setValue('email', 'info@unamifoundation.org');
-    setValue('password', 'Proof321#');
-    setValue('role', 'parent');
-  };
-  
-  const fillSchoolCredentials = () => {
-    setValue('email', 'info@unamifoundation.org');
-    setValue('password', 'Proof321#');
-    setValue('role', 'school');
-  };
-  
-  const fillAuthorityCredentials = () => {
-    setValue('email', 'info@unamifoundation.org');
-    setValue('password', 'Proof321#');
-    setValue('role', 'authority');
+  // Set default role
+  const setRole = (role: string) => {
+    setValue('role', role);
   };
   
   const onSubmit = async (data: LoginFormData) => {
@@ -156,7 +136,7 @@ export default function LoginPage() {
                   borderRadius: '0.375rem',
                   fontSize: '1rem'
                 }}
-                placeholder="info@unamifoundation.org (default)"
+                placeholder="Enter your email"
                 {...register('email', {
                   required: 'Email is required',
                   pattern: {
@@ -208,7 +188,7 @@ export default function LoginPage() {
                     borderRadius: '0.375rem',
                     fontSize: '1rem'
                   }}
-                  placeholder="Proof321# (default)"
+                  placeholder="Enter your password"
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
@@ -339,7 +319,7 @@ export default function LoginPage() {
                   padding: '0 1rem',
                   color: '#64748B',
                   fontSize: '0.875rem'
-                }}>Access Different Dashboards</span>
+                }}>Select Role</span>
               </div>
             </div>
 
@@ -351,10 +331,7 @@ export default function LoginPage() {
             }}>
               <button
                 type="button"
-                onClick={() => {
-                  fillAdminCredentials();
-                  handleSubmit(onSubmit)();
-                }}
+                onClick={() => setRole('admin')}
                 style={{
                   padding: '0.5rem',
                   backgroundColor: '#EFF6FF',
@@ -366,14 +343,11 @@ export default function LoginPage() {
                   cursor: 'pointer'
                 }}
               >
-                Admin Dashboard
+                Admin
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  fillParentCredentials();
-                  handleSubmit(onSubmit)();
-                }}
+                onClick={() => setRole('parent')}
                 style={{
                   padding: '0.5rem',
                   backgroundColor: '#F0FDF4',
@@ -385,14 +359,11 @@ export default function LoginPage() {
                   cursor: 'pointer'
                 }}
               >
-                Parent Dashboard
+                Parent
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  fillSchoolCredentials();
-                  handleSubmit(onSubmit)();
-                }}
+                onClick={() => setRole('school')}
                 style={{
                   padding: '0.5rem',
                   backgroundColor: '#FEF3C7',
@@ -404,14 +375,11 @@ export default function LoginPage() {
                   cursor: 'pointer'
                 }}
               >
-                School Dashboard
+                School
               </button>
               <button
                 type="button"
-                onClick={() => {
-                  fillAuthorityCredentials();
-                  handleSubmit(onSubmit)();
-                }}
+                onClick={() => setRole('authority')}
                 style={{
                   padding: '0.5rem',
                   backgroundColor: '#FEE2E2',
@@ -423,7 +391,7 @@ export default function LoginPage() {
                   cursor: 'pointer'
                 }}
               >
-                Authority Dashboard
+                Authority
               </button>
             </div>
             <p style={{
@@ -432,7 +400,7 @@ export default function LoginPage() {
               textAlign: 'center',
               marginTop: '0.5rem'
             }}>
-              All dashboards use the same admin account
+              Select your role before signing in
             </p>
           </div>
         </div>

@@ -137,12 +137,12 @@ export const useFirestore = () => {
     queryConstraints: any[] = []
   ) => {
     try {
-      let q = collection(db, collectionName);
+      const collectionRef = collection(db, collectionName);
       
       // Apply query constraints if provided
-      if (queryConstraints.length > 0) {
-        q = query(q, ...queryConstraints);
-      }
+      const q = queryConstraints.length > 0 
+        ? query(collectionRef, ...queryConstraints)
+        : collectionRef;
       
       const querySnapshot = await getDocs(q);
       
@@ -169,12 +169,12 @@ export const useFirestore = () => {
         callback([] as T[]);
       }, 0);
       
-      let q = collection(db, collectionName);
+      const collectionRef = collection(db, collectionName);
       
       // Apply query constraints if provided
-      if (queryConstraints.length > 0) {
-        q = query(q, ...queryConstraints);
-      }
+      const q = queryConstraints.length > 0 
+        ? query(collectionRef, ...queryConstraints)
+        : collectionRef;
       
       // Set up real-time listener
       return onSnapshot(q, (snapshot) => {
@@ -248,7 +248,7 @@ export const useFirestore = () => {
   const whereNotIn = (field: string, value: any[]) => where(field, 'not-in', value);
   const orderByAsc = (field: string) => orderBy(field, 'asc');
   const orderByDesc = (field: string) => orderBy(field, 'desc');
-  const limitTo = (limit: number) => limit;
+  const limitTo = (limitCount: number) => limit(limitCount);
 
   return {
     loading,

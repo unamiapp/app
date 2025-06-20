@@ -1,6 +1,6 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import React, { useEffect, useState } from 'react';
 
 /**
  * A utility hook that prevents component flickering by ensuring
@@ -44,7 +44,7 @@ export function useStableRender<T>(data: T | null | undefined, fallback: React.R
  */
 export function withStableRendering<P extends object>(
   Component: React.ComponentType<P>,
-  LoadingComponent: React.ComponentType<any> = () => null
+  LoadingComponent: React.FC = () => null
 ) {
   return function StableComponent(props: P) {
     const [mounted, setMounted] = useState(false);
@@ -55,9 +55,9 @@ export function withStableRendering<P extends object>(
     }, []);
     
     if (!mounted) {
-      return <LoadingComponent />;
+      return LoadingComponent({});
     }
     
-    return <Component {...props} />;
+    return React.createElement(Component, props);
   };
 }

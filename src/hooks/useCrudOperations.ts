@@ -67,7 +67,7 @@ export function useCrudOperations<T extends { id: string }>(
       setItems(prev => [...prev, newItem]);
       
       if (mergedOptions.showToasts) {
-        toast.success(mergedOptions.successMessages.create);
+        toast.success(mergedOptions.successMessages.create || 'Item created successfully');
       }
       
       return newItem;
@@ -76,7 +76,7 @@ export function useCrudOperations<T extends { id: string }>(
       setError(err as Error);
       
       if (mergedOptions.showToasts) {
-        toast.error(mergedOptions.errorMessages.create);
+        toast.error(mergedOptions.errorMessages.create || 'Failed to create item');
       }
       
       throw err;
@@ -96,7 +96,7 @@ export function useCrudOperations<T extends { id: string }>(
       );
       
       if (mergedOptions.showToasts) {
-        toast.success(mergedOptions.successMessages.update);
+        toast.success(mergedOptions.successMessages.update || 'Item updated successfully');
       }
       
       return updatedItem as T;
@@ -105,7 +105,7 @@ export function useCrudOperations<T extends { id: string }>(
       setError(err as Error);
       
       if (mergedOptions.showToasts) {
-        toast.error(mergedOptions.errorMessages.update);
+        toast.error(mergedOptions.errorMessages.update || 'Failed to update item');
       }
       
       throw err;
@@ -123,7 +123,7 @@ export function useCrudOperations<T extends { id: string }>(
       setItems(prev => prev.filter(item => item.id !== id));
       
       if (mergedOptions.showToasts) {
-        toast.success(mergedOptions.successMessages.delete);
+        toast.success(mergedOptions.successMessages.delete || 'Item deleted successfully');
       }
       
       return true;
@@ -132,7 +132,7 @@ export function useCrudOperations<T extends { id: string }>(
       setError(err as Error);
       
       if (mergedOptions.showToasts) {
-        toast.error(mergedOptions.errorMessages.delete);
+        toast.error(mergedOptions.errorMessages.delete || 'Failed to delete item');
       }
       
       throw err;
@@ -150,7 +150,7 @@ export function useCrudOperations<T extends { id: string }>(
       setError(err as Error);
       
       if (mergedOptions.showToasts) {
-        toast.error(mergedOptions.errorMessages.get);
+        toast.error(mergedOptions.errorMessages.get || 'Failed to load item');
       }
       
       throw err;
