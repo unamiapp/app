@@ -15,10 +15,11 @@ export async function GET(request: NextRequest, { params }: { params: { id: stri
       }, { status: 404 });
     }
     
+    // Use type assertion to tell TypeScript that alert has childId property
     const alert = {
       id: alertDoc.id,
       ...alertDoc.data()
-    };
+    } as { id: string; childId?: string; [key: string]: any };
     
     // If the alert has a childId, fetch the child data
     let child = null;
