@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { adminDb } from '@/lib/firebase/admin';
+import { CollectionReference, Query, DocumentData } from 'firebase-admin/firestore';
 
 export async function GET(request: NextRequest) {
   try {
@@ -33,7 +34,7 @@ export async function GET(request: NextRequest) {
     }
     
     // Build query based on filters
-    let query = adminDb.collection('children');
+    let query: CollectionReference<DocumentData> | Query<DocumentData> = adminDb.collection('children');
     
     // Apply parent filter if provided
     if (parentId) {
