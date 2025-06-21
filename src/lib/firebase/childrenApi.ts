@@ -5,6 +5,7 @@
 
 import { adminDb } from './admin';
 import { ChildProfile } from '@/types/child';
+import { CollectionReference, Query, DocumentData } from 'firebase-admin/firestore';
 
 /**
  * Get all children with optional filtering by parent ID
@@ -12,7 +13,7 @@ import { ChildProfile } from '@/types/child';
 export async function getChildren(parentId?: string): Promise<ChildProfile[]> {
   try {
     // Build query based on filters
-    let query = adminDb.collection('children');
+    let query: CollectionReference<DocumentData> | Query<DocumentData> = adminDb.collection('children');
     
     // Apply parent filter if provided
     if (parentId) {
