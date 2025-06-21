@@ -17,7 +17,10 @@
     "test:admin-sdk": "node scripts/test-admin-sdk.js",
     "fix:admin-sdk": "node scripts/fix-admin-sdk.js",
     "create:admin-user": "node scripts/create-admin-user.js",
-    "create:test-child": "node scripts/create-test-child.js"
+    "create:test-child": "node scripts/create-test-child.js",
+    "vercel-build": "next build",
+    "vercel-deploy": "vercel deploy --prod",
+    "prepare:vercel": "./prepare-for-vercel.sh"
   },
   "dependencies": {
     "@headlessui/react": "^2.2.4",

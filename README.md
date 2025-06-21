@@ -26,8 +26,31 @@ UNCIP (Unami National Child Identification Program) is a secure platform that en
 
 4. Run the development server:
    ```bash
-   npm run dev
+   npm run dev:clean
    ```
+
+## Deployment
+
+### Vercel Deployment
+1. Install the Vercel CLI:
+   ```bash
+   npm install -g vercel
+   ```
+
+2. Login to Vercel:
+   ```bash
+   vercel login
+   ```
+
+3. Deploy to Vercel:
+   ```bash
+   npm run vercel-deploy
+   ```
+   
+4. Or use the Vercel GitHub integration for automatic deployments:
+   - Connect your GitHub repository to Vercel
+   - Configure environment variables in the Vercel dashboard
+   - Vercel will automatically deploy when you push to your repository
 
 ### Setup Admin User
 ```bash
