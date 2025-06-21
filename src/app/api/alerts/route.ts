@@ -116,6 +116,10 @@ export async function POST(request: NextRequest) {
                   (session.user as any).email || 
                   'admin-user';
     
+    // Get request data first
+    const data = await request.json();
+    console.log('POST /api/alerts - Received data:', JSON.stringify(data, null, 2));
+    
     // Check if this is an admin request
     const userRole = data._adminRequest ? 'admin' : ((session.user as any).role || 'parent');
     
@@ -126,9 +130,6 @@ export async function POST(request: NextRequest) {
       console.log(`POST /api/alerts - Unauthorized role: ${userRole}`);
       return NextResponse.json({ error: 'Unauthorized role' }, { status: 403 });
     }
-    
-    const data = await request.json();
-    console.log('POST /api/alerts - Received data:', JSON.stringify(data, null, 2));
     
     // Validate required fields
     if (!data.childId || !data.type || !data.description || !data.contactInfo) {
