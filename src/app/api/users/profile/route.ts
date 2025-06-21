@@ -14,7 +14,8 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
     
-    const userId = session.user.id || (session.user as any).uid;
+    // Use type assertion for session.user since NextAuth types don't include id
+    const userId = (session.user as any).id || (session.user as any).uid;
     
     if (!userId) {
       return NextResponse.json({ 
@@ -60,7 +61,8 @@ export async function PATCH(request: NextRequest) {
       }, { status: 401 });
     }
     
-    const userId = session.user.id || (session.user as any).uid;
+    // Use type assertion for session.user since NextAuth types don't include id
+    const userId = (session.user as any).id || (session.user as any).uid;
     
     if (!userId) {
       return NextResponse.json({ 
