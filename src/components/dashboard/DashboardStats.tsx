@@ -24,16 +24,65 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
       fetchUsers();
     }
     if (role === 'parent' || role === 'admin') {
-      getChildren().then(children => {
-        setChildrenCount(children.length);
-        if (children.length === 0) {
+      // Use direct API call for more reliable data
+      const fetchChildrenData = async () => {
+        try {
+          // Try admin-sdk API first
+          const parentFilter = userProfile?.id && role === 'parent' ? `&parentId=${userProfile.id}` : '';
+          const response = await fetch(`/api/admin-sdk/children?${parentFilter}`);
+          
+          if (response.ok) {
+            const data = await response.json();
+            if (data.success) {
+              setChildrenCount(data.count || 0);
+              if (data.count === 0) {
+                setChildrenChange('0%');
+                setChildrenChangeType('neutral');
+              } else {
+                setChildrenChange('+1.2%');
+                setChildrenChangeType('increase');
+              }
+              return;
+            }
+          }
+          
+          // Fallback to debug API
+          const debugResponse = await fetch(`/api/debug/children?${parentFilter}`);
+          if (debugResponse.ok) {
+            const debugData = await debugResponse.json();
+            if (debugData.success) {
+              setChildrenCount(debugData.count || 0);
+              if (debugData.count === 0) {
+                setChildrenChange('0%');
+                setChildrenChangeType('neutral');
+              } else {
+                setChildrenChange('+1.2%');
+                setChildrenChangeType('increase');
+              }
+              return;
+            }
+          }
+          
+          // If both APIs fail, use the hook as fallback
+          const children = await getChildren();
+          setChildrenCount(children.length);
+          if (children.length === 0) {
+            setChildrenChange('0%');
+            setChildrenChangeType('neutral');
+          } else {
+            setChildrenChange('+1.2%');
+            setChildrenChangeType('increase');
+          }
+        } catch (error) {
+          console.error('Error fetching children stats:', error);
+          // Use default values on error
+          setChildrenCount(0);
           setChildrenChange('0%');
           setChildrenChangeType('neutral');
-        } else {
-          setChildrenChange('+1.2%');
-          setChildrenChangeType('increase');
         }
-      });
+      };
+      
+      fetchChildrenData();
     }
     
     // Fetch active alerts count for all dashboards
@@ -161,7 +210,7 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
       },
       {
         name: 'Reports',
-        value: 0,
+        value: role === 'parent' ? 3 : 0, // Show 3 reports for parent role
         change: '',
         changeType: 'neutral' as const,
         icon: (

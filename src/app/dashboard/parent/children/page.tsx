@@ -4,41 +4,26 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
-import Pagination from '@/components/ui/Pagination';
-
-// Using the reusable Pagination component instead of inline
 
 export default function ChildrenPage() {
   const { userProfile } = useAuth();
   const [loading, setLoading] = useState(true);
   const [children, setChildren] = useState([]);
   const [error, setError] = useState(null);
-  const [showDebug, setShowDebug] = useState(false);
-  const [currentPage, setCurrentPage] = useState(1);
-  const [totalPages, setTotalPages] = useState(1);
-  const [totalItems, setTotalItems] = useState(0);
-  const itemsPerPage = 6;
 
   useEffect(() => {
     const fetchChildren = async () => {
       try {
         setLoading(true);
-        
-        // Use the debug API with pagination
-        const parentFilter = userProfile?.id ? `&parentId=${userProfile.id}` : '';
-        const response = await fetch(`/api/debug/children?page=${currentPage}&limit=${itemsPerPage}${parentFilter}`);
+        const response = await fetch('/api/debug/children');
         
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
         
         const data = await response.json();
-        console.log('Children data:', data);
-        
         if (data.success) {
           setChildren(data.children || []);
-          setTotalPages(data.totalPages || 1);
-          setTotalItems(data.count || 0);
         } else {
           throw new Error(data.error || 'Failed to fetch children');
         }
@@ -51,7 +36,7 @@ export default function ChildrenPage() {
     };
 
     fetchChildren();
-  }, [currentPage, userProfile]);
+  }, []);
 
   const handleDeleteChild = async (childId) => {
     if (!confirm('Are you sure you want to remove this child profile?')) {
@@ -72,22 +57,10 @@ export default function ChildrenPage() {
       
       if (result.success) {
         toast.success('Child deleted successfully');
-        
         // Refresh the children list
-        const parentFilter = userProfile?.id ? `&parentId=${userProfile.id}` : '';
-        const updatedResponse = await fetch(`/api/debug/children?page=${currentPage}&limit=${itemsPerPage}${parentFilter}`);
+        const updatedResponse = await fetch('/api/debug/children');
         const updatedData = await updatedResponse.json();
-        
-        if (updatedData.success) {
-          setChildren(updatedData.children || []);
-          setTotalPages(updatedData.totalPages || 1);
-          setTotalItems(updatedData.count || 0);
-          
-          // If we deleted the last item on the page, go to previous page
-          if (updatedData.children.length === 0 && currentPage > 1) {
-            setCurrentPage(currentPage - 1);
-          }
-        }
+        setChildren(updatedData.children || []);
       } else {
         throw new Error(result.message || 'Failed to delete child');
       }
@@ -95,10 +68,6 @@ export default function ChildrenPage() {
       console.error('Error deleting child:', err);
       toast.error(err.message || 'Failed to delete child');
     }
-  };
-
-  const handlePageChange = (page) => {
-    setCurrentPage(page);
   };
 
   if (loading) {
@@ -135,24 +104,6 @@ export default function ChildrenPage() {
           </Link>
         </div>
       </div>
-
-      {/* Debug toggle */}
-      <div className="mt-2 flex justify-end">
-        <button
-          onClick={() => setShowDebug(!showDebug)}
-          className="text-xs text-gray-500 hover:text-gray-700"
-        >
-          {showDebug ? 'Hide Debug Info' : 'Show Debug Info'}
-        </button>
-      </div>
-      
-      {/* Debug information */}
-      {showDebug && (
-        <div className="mt-2 p-2 bg-gray-100 rounded text-xs font-mono">
-          <p>Children count: {totalItems}</p>
-          <p>Current page: {currentPage} of {totalPages}</p>
-        </div>
-      )}
 
       <div className="mt-8">
         {children.length === 0 ? (
@@ -205,17 +156,6 @@ export default function ChildrenPage() {
                 </div>
               </div>
             ))}
-          </div>
-        )}
-        
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
           </div>
         )}
       </div>

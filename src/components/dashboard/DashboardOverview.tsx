@@ -48,19 +48,19 @@ export default function DashboardOverview({ role }: DashboardOverviewProps) {
   };
 
   return (
-    <div className="px-4 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-6 mb-6">
-        <div className="sm:flex sm:items-center sm:justify-between">
-          <div className="sm:flex-auto">
-            <h1 className="text-2xl font-semibold text-gray-900">{getRoleTitle()}</h1>
+    <div className="px-2 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
+        <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
+          <div className="flex-auto">
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{getRoleTitle()}</h1>
             <p className="mt-2 text-sm text-gray-600">
               Welcome{userProfile?.displayName ? `, ${userProfile.displayName}` : ''}! {getRoleDescription()}
             </p>
           </div>
-          <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
+          <div className="mt-4 sm:mt-0 sm:ml-16 flex-none">
             <a
               href={`/dashboard/${role}/profile`}
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 sm:w-auto"
+              className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full sm:w-auto"
             >
               View Profile
             </a>
@@ -73,13 +73,13 @@ export default function DashboardOverview({ role }: DashboardOverviewProps) {
         <DashboardStats role={role} />
       </div>
       
-      <div className="grid grid-cols-1 gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
         {/* Quick Actions */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 h-full">
+          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-200 h-full">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Quick Actions</h2>
-              <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
+              <h2 className="text-base sm:text-lg font-medium text-gray-900">Quick Actions</h2>
+              <button className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-800">View All</button>
             </div>
             <QuickActions role={role} />
           </div>
@@ -87,10 +87,10 @@ export default function DashboardOverview({ role }: DashboardOverviewProps) {
         
         {/* Recent Activity */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm p-6 border border-gray-200 h-full">
+          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-200 h-full">
             <div className="flex items-center justify-between mb-4">
-              <h2 className="text-lg font-medium text-gray-900">Recent Activity</h2>
-              <button className="text-sm text-indigo-600 hover:text-indigo-800">View All</button>
+              <h2 className="text-base sm:text-lg font-medium text-gray-900">Recent Activity</h2>
+              <a href={`/dashboard/${role}/activities`} className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-800">View All</a>
             </div>
             <RecentActivity role={role} limit={5} />
           </div>

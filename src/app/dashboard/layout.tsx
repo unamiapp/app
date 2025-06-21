@@ -4,6 +4,8 @@ import { useEffect, useState } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import Link from 'next/link';
 import RoleSwitcher from '@/components/RoleSwitcher';
+import Footer from '@/components/layout/Footer';
+import UserProfilePhoto from '@/components/profile/UserProfilePhoto';
 
 export default function DashboardLayout({
   children,
@@ -15,12 +17,16 @@ export default function DashboardLayout({
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   useEffect(() => {
-    // Set a timeout to prevent immediate rendering which causes flickering
-    const timer = setTimeout(() => {
-      setMounted(true);
-    }, 50);
-    
-    return () => clearTimeout(timer);
+    // Set mounted state immediately to prevent flickering
+    setMounted(true);
+  }, []);
+  
+  // Add a class to prevent flickering during hydration
+  useEffect(() => {
+    document.body.classList.add('prevent-flicker');
+    return () => {
+      document.body.classList.remove('prevent-flicker');
+    };
   }, []);
   
   // Get role title for header
@@ -148,9 +154,9 @@ export default function DashboardLayout({
   const navigation = getNavigation();
 
   return (
-    <div className="min-h-screen bg-slate-50 flex prevent-flicker">
+    <div className="min-h-screen bg-slate-50 flex flex-col md:flex-row prevent-flicker">
       {/* Sidebar for desktop */}
-      <div className="w-64 bg-white border-r border-slate-200 hidden md:flex md:flex-col">
+      <div className="w-full md:w-64 bg-white border-r border-slate-200 hidden md:flex md:flex-col">
         <div className="h-16 border-b border-slate-200 flex items-center px-6">
           <Link href="/" className="text-xl font-semibold text-indigo-600">UNCIP App</Link>
         </div>
@@ -175,9 +181,19 @@ export default function DashboardLayout({
         <div className="border-t border-slate-200 p-4">
           <div className="flex items-center space-x-3">
             <Link href={`/dashboard/${userRole}/profile`} className="flex-shrink-0">
-              <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
-                {userProfile?.displayName?.[0]?.toUpperCase() || 'U'}
-              </div>
+              {userProfile?.photoURL ? (
+                <div className="h-10 w-10 rounded-full overflow-hidden">
+                  <img 
+                    src={userProfile.photoURL} 
+                    alt={userProfile?.displayName || 'User'}
+                    className="h-full w-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600">
+                  {userProfile?.displayName?.[0]?.toUpperCase() || 'U'}
+                </div>
+              )}
             </Link>
             <div className="flex-1 min-w-0">
               <Link href={`/dashboard/${userRole}/profile`} className="block">
@@ -203,7 +219,7 @@ export default function DashboardLayout({
       </div>
       
       {/* Main content */}
-      <div className="flex-1 flex flex-col">
+      <div className="flex-1 flex flex-col w-full">
         <div className="h-16 border-b border-slate-200 flex items-center justify-between px-6">
           <div className="flex items-center">
             {/* Mobile menu button */}
@@ -257,9 +273,19 @@ export default function DashboardLayout({
               {/* User info in mobile menu */}
               <div className="mt-4 border-t border-slate-200 pt-4 px-4">
                 <Link href={`/dashboard/${userRole}/profile`} className="flex items-center" onClick={() => setMobileMenuOpen(false)}>
-                  <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
-                    {userProfile?.displayName?.[0]?.toUpperCase() || 'U'}
-                  </div>
+                  {userProfile?.photoURL ? (
+                    <div className="h-10 w-10 rounded-full overflow-hidden mr-3">
+                      <img 
+                        src={userProfile.photoURL} 
+                        alt={userProfile?.displayName || 'User'}
+                        className="h-full w-full object-cover"
+                      />
+                    </div>
+                  ) : (
+                    <div className="h-10 w-10 rounded-full bg-indigo-100 flex items-center justify-center text-indigo-600 mr-3">
+                      {userProfile?.displayName?.[0]?.toUpperCase() || 'U'}
+                    </div>
+                  )}
                   <div>
                     <p className="text-sm font-medium text-slate-900">
                       {userProfile?.displayName || 'User'}
@@ -274,11 +300,13 @@ export default function DashboardLayout({
           </div>
         )}
         
-        <div className="p-6 flex-1">
+        <div className="p-4 sm:p-6 flex-1">
           <div className="max-w-7xl mx-auto">
             {children}
           </div>
         </div>
+        
+        <Footer />
       </div>
     </div>
   );

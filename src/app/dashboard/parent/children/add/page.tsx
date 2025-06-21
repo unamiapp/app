@@ -83,9 +83,9 @@ export default function AddChildPage() {
         },
       };
       
-      // Create the child profile using debug API directly
+      // Create the child profile using admin-sdk API
       setLoading(true);
-      const response = await fetch('/api/debug/children', {
+      const response = await fetch('/api/admin-sdk/children', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -94,17 +94,76 @@ export default function AddChildPage() {
       });
       
       if (!response.ok) {
-        const errorData = await response.json();
-        throw new Error(errorData.error || 'Failed to create child profile');
-      }
-      
-      const result = await response.json();
-      
-      if (result.success) {
-        toast.success('Child profile created successfully!');
-        router.push('/dashboard/parent/children');
+        // Fallback to debug API if admin-sdk API fails
+        console.log('Admin SDK API failed, trying debug API');
+        const debugResponse = await fetch('/api/debug/children', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify(childData),
+        });
+        
+        if (!debugResponse.ok) {
+          const errorData = await debugResponse.json();
+          throw new Error(errorData.error || 'Failed to create child profile');
+        }
+        
+        const debugResult = await debugResponse.json();
+        
+        if (debugResult.success) {
+          // Show success notification
+          toast.success('Child profile created successfully!');
+          
+          // Log activity for recent activities
+          try {
+            await fetch('/api/debug/activities', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'profile',
+                title: 'Child Profile Created',
+                description: `Created profile for ${formData.firstName} ${formData.lastName}`,
+                status: 'success'
+              })
+            });
+          } catch (activityError) {
+            console.error('Failed to log activity:', activityError);
+          }
+          
+          // Navigate to children page
+          router.push('/dashboard/parent/children');
+        } else {
+          throw new Error(debugResult.message || 'Failed to create child profile');
+        }
       } else {
-        throw new Error(result.message || 'Failed to create child profile');
+        const result = await response.json();
+        
+        if (result.success) {
+          // Show success notification
+          toast.success('Child profile created successfully!');
+          
+          // Log activity for recent activities
+          try {
+            await fetch('/api/debug/activities', {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({
+                type: 'profile',
+                title: 'Child Profile Created',
+                description: `Created profile for ${formData.firstName} ${formData.lastName}`,
+                status: 'success'
+              })
+            });
+          } catch (activityError) {
+            console.error('Failed to log activity:', activityError);
+          }
+          
+          // Navigate to children page
+          router.push('/dashboard/parent/children');
+        } else {
+          throw new Error(result.message || 'Failed to create child profile');
+        }
       }
     } catch (error) {
       console.error('Error creating child profile:', error);

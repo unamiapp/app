@@ -59,7 +59,12 @@ const nextConfig = {
         destination: '/auth/register',
         permanent: true,
       },
-      // Removed redirect for children page
+      // Ensure proper routing for parent children page
+      {
+        source: '/dashboard/parent/children-test',
+        destination: '/dashboard/parent/children',
+        permanent: false,
+      },
     ];
   },
   // Configure webpack for optimization

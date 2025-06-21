@@ -9,6 +9,7 @@ interface UserProfilePhotoProps {
   displayName?: string;
   size?: 'sm' | 'md' | 'lg';
   editable?: boolean;
+  className?: string;
   onPhotoChange?: (url: string) => void;
 }
 
@@ -17,6 +18,7 @@ export default function UserProfilePhoto({
   displayName = 'User',
   size = 'md',
   editable = false,
+  className = '',
   onPhotoChange
 }: UserProfilePhotoProps) {
   const [isEditing, setIsEditing] = useState(false);
@@ -91,7 +93,7 @@ export default function UserProfilePhoto({
   }
   
   return (
-    <div className="relative">
+    <div className={`relative ${className}`}>
       {currentPhotoURL ? (
         <div className={`${sizeClasses[size]} rounded-full overflow-hidden bg-gray-200`}>
           <img

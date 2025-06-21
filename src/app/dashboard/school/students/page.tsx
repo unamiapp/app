@@ -5,23 +5,48 @@ import { useChildren } from '@/hooks/useAdminSdk';
 import { ChildProfile } from '@/types/child';
 
 export default function StudentsPage() {
-  const { getChildren, loading } = useChildren();
+  const { getChildren } = useChildren();
   const [students, setStudents] = useState<ChildProfile[]>([]);
+  const [loading, setLoading] = useState(true);
   const [currentPage, setCurrentPage] = useState(1);
   const studentsPerPage = 10;
 
   useEffect(() => {
+    // Use a local loading state instead of the hook's loading state
+    let isMounted = true;
+    
     const fetchStudents = async () => {
       try {
-        const childrenData = await getChildren();
-        setStudents(childrenData);
+        setLoading(true);
+        // Use the debug API directly for more reliable data
+        const response = await fetch('/api/debug/children');
+        
+        if (!response.ok) {
+          throw new Error('Failed to fetch students');
+        }
+        
+        const data = await response.json();
+        
+        // Only update state if component is still mounted
+        if (isMounted) {
+          setStudents(data.children || []);
+          setLoading(false);
+        }
       } catch (error) {
         console.error('Error fetching students:', error);
+        if (isMounted) {
+          setLoading(false);
+        }
       }
     };
 
     fetchStudents();
-  }, [getChildren]);
+    
+    // Cleanup function to prevent state updates after unmount
+    return () => {
+      isMounted = false;
+    };
+  }, []);
 
   const totalPages = Math.ceil(students.length / studentsPerPage);
   const startIndex = (currentPage - 1) * studentsPerPage;

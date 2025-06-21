@@ -8,6 +8,16 @@
 
 import * as admin from 'firebase-admin';
 
+// Define a global variable to track initialization across module reloads
+// This helps prevent duplicate initializations in development with hot reloading
+declare global {
+  var _firebaseAdminInitialized: boolean;
+  var _firebaseAdminApp: admin.app.App;
+  var _firebaseAdminAuth: admin.auth.Auth;
+  var _firebaseAdminDb: admin.firestore.Firestore;
+  var _firebaseAdminStorage: admin.storage.Storage;
+}
+
 // Define a class to manage the Firebase Admin SDK instance
 class FirebaseAdminSingleton {
   private static instance: FirebaseAdminSingleton;
@@ -18,35 +28,61 @@ class FirebaseAdminSingleton {
   public adminStorage: admin.storage.Storage;
   
   private constructor() {
-    if (!admin.apps.length) {
+    // Check if we've already initialized Firebase Admin SDK globally
+    if (!global._firebaseAdminInitialized) {
       try {
-        // Use a service account directly for more reliable initialization
-        const serviceAccount = {
-          projectId: process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID,
-          clientEmail: process.env.FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL,
-          privateKey: process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
-        };
+        // Check if we have any existing apps
+        if (!admin.apps.length) {
+          // Use a service account directly for more reliable initialization
+          const serviceAccount = {
+            projectId: process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID,
+            clientEmail: process.env.FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL,
+            privateKey: process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+          };
 
-        admin.initializeApp({
-          credential: admin.credential.cert(serviceAccount),
-          storageBucket: `${process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID}.appspot.com`,
-          databaseURL: `https://${process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID}.firebaseio.com`,
-        });
+          // Initialize the app
+          global._firebaseAdminApp = admin.initializeApp({
+            credential: admin.credential.cert(serviceAccount),
+            storageBucket: `${process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID}.appspot.com`,
+            databaseURL: `https://${process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID}.firebaseio.com`,
+          });
+          
+          // Initialize services
+          global._firebaseAdminAuth = admin.auth();
+          global._firebaseAdminDb = admin.firestore();
+          global._firebaseAdminStorage = admin.storage();
+          
+          // Mark as initialized
+          global._firebaseAdminInitialized = true;
+          
+          console.log('Firebase Admin SDK initialized successfully');
+        } else {
+          // Use existing app
+          global._firebaseAdminApp = admin.app();
+          global._firebaseAdminAuth = admin.auth();
+          global._firebaseAdminDb = admin.firestore();
+          global._firebaseAdminStorage = admin.storage();
+          global._firebaseAdminInitialized = true;
+          
+          console.log('Using existing Firebase Admin SDK instance');
+        }
         
-        console.log('Firebase Admin SDK initialized successfully');
         this.initialized = true;
       } catch (error) {
         console.error('Firebase Admin SDK initialization error:', error);
+        this.initialized = false;
         throw error;
       }
     } else {
-      console.log('Using existing Firebase Admin SDK instance');
+      // Use the globally cached instances
+      console.log('Using cached Firebase Admin SDK instance');
       this.initialized = true;
     }
     
-    this.adminAuth = admin.auth();
-    this.adminDb = admin.firestore();
-    this.adminStorage = admin.storage();
+    // Set the class properties to use the global instances
+    this.adminAuth = global._firebaseAdminAuth || admin.auth();
+    this.adminDb = global._firebaseAdminDb || admin.firestore();
+    this.adminStorage = global._firebaseAdminStorage || admin.storage();
   }
   
   public static getInstance(): FirebaseAdminSingleton {
