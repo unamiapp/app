@@ -3,6 +3,7 @@ import { getServerSession } from 'next-auth/next';
 import { adminDb } from '@/lib/firebase/admin';
 import { ChildAlert } from '@/types/child';
 import { extractUserId, extractUserRole } from '@/lib/utils/sessionUtils';
+import { CollectionReference, Query, DocumentData } from 'firebase-admin/firestore';
 
 // GET /api/alerts - Get all alerts based on user role
 export async function GET(request: NextRequest) {
@@ -17,7 +18,7 @@ export async function GET(request: NextRequest) {
     const userId = extractUserId(session.user);
     const userRole = extractUserRole(session.user);
     
-    let alertsQuery;
+    let alertsQuery: CollectionReference<DocumentData> | Query<DocumentData>;
     
     // Different queries based on user role
     if (userRole === 'admin' || userRole === 'authority') {
