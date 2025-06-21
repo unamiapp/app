@@ -46,7 +46,8 @@ export default function AdminAlertsPage() {
         
         // Fetch children data for each alert
         if (filteredAlerts.length > 0) {
-          const childIds = [...new Set(filteredAlerts.map((alert: ChildAlert) => alert.childId))];
+          const childIdsSet = new Set(filteredAlerts.map((alert: ChildAlert) => alert.childId));
+          const childIds = Array.from(childIdsSet);
           const childrenDetails: {[key: string]: any} = {};
           
           // Get all children at once using the debug API

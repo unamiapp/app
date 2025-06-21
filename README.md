@@ -79,6 +79,7 @@ The application uses NextAuth.js with Firebase Authentication. The admin user ca
 ## Tech Stack
 - Next.js 13 (App Router)
 - React
+- TypeScript (ES2015 target with downlevelIteration)
 - Firebase (Auth, Firestore, Storage)
 - NextAuth.js
 - Tailwind CSS
