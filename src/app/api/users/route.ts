@@ -84,9 +84,9 @@ export async function POST(request: NextRequest) {
           code: 'email-already-exists'
         }, { status: 409 });
       }
-    } catch (error: any) {
+    } catch (error) {
       // If error code is auth/user-not-found, that's good - continue
-      if (error.code !== 'auth/user-not-found') {
+      if (error instanceof Error && 'code' in error && (error as any).code !== 'auth/user-not-found') {
         console.error('Error checking existing user:', error);
         throw error;
       }
@@ -146,12 +146,14 @@ export async function POST(request: NextRequest) {
     });
     
     return NextResponse.json(userData, { status: 201 });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error creating user:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    const errorCode = error instanceof Error && 'code' in error ? (error as any).code : 'unknown-error';
     return NextResponse.json({ 
       error: 'Failed to create user', 
-      message: error.message || 'Internal server error',
-      code: error.code || 'unknown-error'
+      message: errorMessage,
+      code: errorCode
     }, { status: 500 });
   }
 }

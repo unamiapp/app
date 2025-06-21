@@ -26,11 +26,12 @@ export async function GET(
       id: userDoc.id,
       ...userData
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error fetching user:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ 
       error: 'Failed to fetch user', 
-      message: error.message || 'Internal server error' 
+      message: errorMessage 
     }, { status: 500 });
   }
 }

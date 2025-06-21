@@ -228,10 +228,12 @@ export async function POST(request: NextRequest) {
       }, { status: 201 });
     } catch (dbError) {
       console.error('POST /api/alerts - Database error:', dbError);
-      return NextResponse.json({ error: 'Database error', details: dbError.message }, { status: 500 });
+      const errorMessage = dbError instanceof Error ? dbError.message : 'Unknown database error';
+      return NextResponse.json({ error: 'Database error', details: errorMessage }, { status: 500 });
     }
   } catch (error) {
     console.error('Error creating alert:', error);
-    return NextResponse.json({ error: 'Internal server error', details: error.message }, { status: 500 });
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
+    return NextResponse.json({ error: 'Internal server error', details: errorMessage }, { status: 500 });
   }
 }

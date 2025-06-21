@@ -101,12 +101,13 @@ export async function GET(request: NextRequest) {
       message: success ? 'Firebase Admin SDK connection successful' : 'Firebase Admin SDK connection failed',
       results
     });
-  } catch (error: any) {
+  } catch (error) {
     console.error('Error checking Firebase Admin SDK connection:', error);
+    const errorMessage = error instanceof Error ? error.message : 'Unknown error';
     return NextResponse.json({ 
       success: false,
       message: 'Error checking Firebase Admin SDK connection',
-      error: error.message || 'Internal server error'
+      error: errorMessage
     }, { status: 500 });
   }
 }
