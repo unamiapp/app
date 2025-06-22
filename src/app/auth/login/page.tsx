@@ -33,6 +33,7 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
+      // Use window.location for direct navigation
       const result = await signIn('credentials', {
         redirect: false,
         email: data.email,
@@ -46,148 +47,76 @@ export default function LoginPage() {
       
       toast.success('Signed in successfully!');
       
-      // Redirect to the appropriate dashboard based on role
+      // Use window.location for direct navigation
       const redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/admin';
-      router.push(redirectTo);
+      window.location.href = redirectTo;
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.message || 'Failed to login. Please check your credentials.');
-    } finally {
       setIsLoading(false);
     }
   };
 
   return (
-    <div style={{
-      minHeight: '100vh',
-      background: 'linear-gradient(to bottom right, #EFF6FF, #DBEAFE)',
-      display: 'flex',
-      flexDirection: 'column',
-      justifyContent: 'center',
-      padding: '2rem 1rem'
-    }}>
-      <div style={{
-        maxWidth: '28rem',
-        margin: '0 auto',
-        width: '100%',
-        textAlign: 'center'
-      }}>
-        <h1 style={{
-          fontSize: '1.875rem',
-          fontWeight: 'bold',
-          color: '#1D4ED8',
-          marginBottom: '0.5rem'
-        }}>UNCIP</h1>
-        <h2 style={{
-          fontSize: '1.5rem',
-          fontWeight: 'bold',
-          color: '#1E293B',
-          marginBottom: '1.5rem'
-        }}>Welcome Back</h2>
-        <p style={{color: '#64748B'}}>
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+        <h1 className="text-3xl font-bold text-blue-700">UNCIP</h1>
+        <h2 className="mt-2 text-2xl font-bold text-gray-800">Welcome Back</h2>
+        <p className="mt-2 text-sm text-gray-500">
           Don't have an account?{' '}
-          <Link href="/auth/register" style={{
-            color: '#1D4ED8',
-            fontWeight: '500',
-            textDecoration: 'none'
-          }}>
+          <Link href="/auth/register" className="font-medium text-blue-700 hover:text-blue-800">
             Create one now
           </Link>
         </p>
       </div>
 
-      <div style={{
-        maxWidth: '28rem',
-        margin: '2rem auto 0',
-        width: '100%'
-      }}>
-        <div style={{
-          backgroundColor: 'white',
-          borderRadius: '0.5rem',
-          boxShadow: '0 10px 15px rgba(0,0,0,0.1)',
-          padding: '2rem',
-          border: '1px solid #E2E8F0'
-        }}>
-          <form onSubmit={handleSubmit(onSubmit)} style={{marginBottom: '1.5rem'}}>
-            <div style={{marginBottom: '1.5rem'}}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '0.5rem'
-              }}>
-                <label htmlFor="email" style={{
-                  display: 'block',
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#1E293B'
-                }}>
-                  Email address
-                </label>
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
+          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
+            <div>
+              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
+                Email address
+              </label>
+              <div className="mt-1">
+                <input
+                  id="email"
+                  type="email"
+                  autoComplete="email"
+                  className={`appearance-none block w-full px-3 py-2 border ${
+                    errors.email ? 'border-red-500' : 'border-gray-300'
+                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
+                  placeholder="Enter your email"
+                  {...register('email', {
+                    required: 'Email is required',
+                    pattern: {
+                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                      message: 'Invalid email address',
+                    },
+                  })}
+                />
+                {errors.email && (
+                  <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
+                )}
               </div>
-              <input
-                id="email"
-                type="email"
-                autoComplete="email"
-                style={{
-                  width: '100%',
-                  padding: '0.75rem 1rem',
-                  border: errors.email ? '1px solid #EF4444' : '1px solid #E2E8F0',
-                  borderRadius: '0.375rem',
-                  fontSize: '1rem'
-                }}
-                placeholder="Enter your email"
-                {...register('email', {
-                  required: 'Email is required',
-                  pattern: {
-                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                    message: 'Invalid email address',
-                  },
-                })}
-              />
-              {errors.email && (
-                <p style={{color: '#EF4444', fontSize: '0.875rem', marginTop: '0.5rem'}}>
-                  {errors.email.message}
-                </p>
-              )}
             </div>
 
-            <div style={{marginBottom: '1.5rem'}}>
-              <div style={{
-                display: 'flex',
-                justifyContent: 'space-between',
-                alignItems: 'center',
-                marginBottom: '0.5rem'
-              }}>
-                <label htmlFor="password" style={{
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#1E293B'
-                }}>
+            <div>
+              <div className="flex justify-between">
+                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
                   Password
                 </label>
-                <Link href="/auth/forgot-password" style={{
-                  fontSize: '0.875rem',
-                  fontWeight: '500',
-                  color: '#1D4ED8',
-                  textDecoration: 'none'
-                }}>
+                <Link href="/auth/forgot-password" className="text-sm font-medium text-blue-700 hover:text-blue-800">
                   Forgot password?
                 </Link>
               </div>
-              <div style={{ position: 'relative' }}>
+              <div className="mt-1 relative">
                 <input
                   id="password"
                   type={showPassword ? "text" : "password"}
                   autoComplete="current-password"
-                  style={{
-                    width: '100%',
-                    padding: '0.75rem 1rem',
-                    paddingRight: '2.5rem',
-                    border: errors.password ? '1px solid #EF4444' : '1px solid #E2E8F0',
-                    borderRadius: '0.375rem',
-                    fontSize: '1rem'
-                  }}
+                  className={`appearance-none block w-full px-3 py-2 border ${
+                    errors.password ? 'border-red-500' : 'border-gray-300'
+                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                   placeholder="Enter your password"
                   {...register('password', {
                     required: 'Password is required',
@@ -200,206 +129,103 @@ export default function LoginPage() {
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
-                  style={{
-                    position: 'absolute',
-                    right: '0.75rem',
-                    top: '50%',
-                    transform: 'translateY(-50%)',
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: '#64748B'
-                  }}
+                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
                 >
                   {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M17.94 17.94A10.07 10.07 0 0 1 12 20c-7 0-11-8-11-8a18.45 18.45 0 0 1 5.06-5.94M9.9 4.24A9.12 9.12 0 0 1 12 4c7 0 11 8 11 8a18.5 18.5 0 0 1-2.16 3.19m-6.72-1.07a3 3 0 1 1-4.24-4.24"></path>
-                      <line x1="1" y1="1" x2="23" y2="23"></line>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
+                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
                     </svg>
                   ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-                      <circle cx="12" cy="12" r="3"></circle>
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
+                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
                     </svg>
                   )}
                 </button>
+                {errors.password && (
+                  <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
+                )}
               </div>
-              {errors.password && (
-                <p style={{color: '#EF4444', fontSize: '0.875rem', marginTop: '0.5rem'}}>
-                  {errors.password.message}
-                </p>
-              )}
             </div>
 
             {/* Hidden role field */}
             <input type="hidden" {...register('role')} />
 
-            <div style={{
-              display: 'flex',
-              alignItems: 'center',
-              marginBottom: '1.5rem'
-            }}>
+            <div className="flex items-center">
               <input
                 id="remember-me"
                 name="remember-me"
                 type="checkbox"
-                style={{
-                  height: '1.25rem',
-                  width: '1.25rem',
-                  borderRadius: '0.25rem',
-                  borderColor: '#E2E8F0'
-                }}
+                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
               />
-              <label htmlFor="remember-me" style={{
-                marginLeft: '0.5rem',
-                fontSize: '0.875rem',
-                color: '#1E293B'
-              }}>
+              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
                 Remember me
               </label>
             </div>
 
-            <button
-              type="submit"
-              style={{
-                width: '100%',
-                display: 'flex',
-                justifyContent: 'center',
-                alignItems: 'center',
-                padding: '0.75rem 1rem',
-                backgroundColor: '#1D4ED8',
-                color: 'white',
-                borderRadius: '0.375rem',
-                fontWeight: '500',
-                fontSize: '1rem',
-                border: 'none',
-                cursor: 'pointer'
-              }}
-              disabled={isLoading}
-            >
-              {isLoading ? (
-                <>
-                  <div style={{
-                    width: '1.25rem',
-                    height: '1.25rem',
-                    borderRadius: '50%',
-                    borderTop: '2px solid white',
-                    borderRight: '2px solid transparent',
-                    marginRight: '0.5rem',
-                    animation: 'spin 1s linear infinite'
-                  }}></div>
-                  Signing in...
-                </>
-              ) : (
-                'Sign in'
-              )}
-            </button>
+            <div>
+              <button
+                type="submit"
+                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
+                disabled={isLoading}
+              >
+                {isLoading ? (
+                  <>
+                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
+                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
+                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
+                    </svg>
+                    Signing in...
+                  </>
+                ) : (
+                  'Sign in'
+                )}
+              </button>
+            </div>
           </form>
 
-          <div>
-            <div style={{
-              position: 'relative',
-              marginBottom: '1.5rem'
-            }}>
-              <div style={{
-                position: 'absolute',
-                top: '50%',
-                left: 0,
-                right: 0,
-                height: '1px',
-                backgroundColor: '#E2E8F0'
-              }}></div>
-              <div style={{
-                position: 'relative',
-                display: 'flex',
-                justifyContent: 'center'
-              }}>
-                <span style={{
-                  backgroundColor: 'white',
-                  padding: '0 1rem',
-                  color: '#64748B',
-                  fontSize: '0.875rem'
-                }}>Select Role</span>
+          <div className="mt-6">
+            <div className="relative">
+              <div className="absolute inset-0 flex items-center">
+                <div className="w-full border-t border-gray-300"></div>
+              </div>
+              <div className="relative flex justify-center text-sm">
+                <span className="px-2 bg-white text-gray-500">Select Role</span>
               </div>
             </div>
 
-            <div style={{
-              display: 'grid',
-              gridTemplateColumns: '1fr 1fr',
-              gap: '0.5rem',
-              marginBottom: '1rem'
-            }}>
+            <div className="mt-6 grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setRole('admin')}
-                style={{
-                  padding: '0.5rem',
-                  backgroundColor: '#EFF6FF',
-                  color: '#1D4ED8',
-                  border: '1px solid #BFDBFE',
-                  borderRadius: '0.375rem',
-                  fontWeight: '500',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer'
-                }}
+                className="w-full inline-flex justify-center py-2 px-4 border border-blue-200 rounded-md shadow-sm bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100"
               >
                 Admin
               </button>
               <button
                 type="button"
                 onClick={() => setRole('parent')}
-                style={{
-                  padding: '0.5rem',
-                  backgroundColor: '#F0FDF4',
-                  color: '#16A34A',
-                  border: '1px solid #BBF7D0',
-                  borderRadius: '0.375rem',
-                  fontWeight: '500',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer'
-                }}
+                className="w-full inline-flex justify-center py-2 px-4 border border-green-200 rounded-md shadow-sm bg-green-50 text-sm font-medium text-green-700 hover:bg-green-100"
               >
                 Parent
               </button>
               <button
                 type="button"
                 onClick={() => setRole('school')}
-                style={{
-                  padding: '0.5rem',
-                  backgroundColor: '#FEF3C7',
-                  color: '#D97706',
-                  border: '1px solid #FDE68A',
-                  borderRadius: '0.375rem',
-                  fontWeight: '500',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer'
-                }}
+                className="w-full inline-flex justify-center py-2 px-4 border border-yellow-200 rounded-md shadow-sm bg-yellow-50 text-sm font-medium text-yellow-700 hover:bg-yellow-100"
               >
                 School
               </button>
               <button
                 type="button"
                 onClick={() => setRole('authority')}
-                style={{
-                  padding: '0.5rem',
-                  backgroundColor: '#FEE2E2',
-                  color: '#DC2626',
-                  border: '1px solid #FECACA',
-                  borderRadius: '0.375rem',
-                  fontWeight: '500',
-                  fontSize: '0.875rem',
-                  cursor: 'pointer'
-                }}
+                className="w-full inline-flex justify-center py-2 px-4 border border-red-200 rounded-md shadow-sm bg-red-50 text-sm font-medium text-red-700 hover:bg-red-100"
               >
                 Authority
               </button>
             </div>
-            <p style={{
-              fontSize: '0.75rem',
-              color: '#64748B',
-              textAlign: 'center',
-              marginTop: '0.5rem'
-            }}>
+            <p className="mt-2 text-xs text-center text-gray-500">
               Select your role before signing in
             </p>
           </div>

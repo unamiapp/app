@@ -66,7 +66,9 @@ export const useChildren = () => {
       
       // Add a timestamp to prevent caching
       const timestamp = new Date().getTime();
-      const response = await fetch(`/api/admin-sdk/children?_t=${timestamp}`);
+      // If user is a parent, filter children by parent ID
+      const parentFilter = userProfile.role === 'parent' ? `&parentId=${userProfile.id}` : '';
+      const response = await fetch(`/api/admin-sdk/children?_t=${timestamp}${parentFilter}`);
       
       console.log('API response status:', response.status);
       

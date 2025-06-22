@@ -19,7 +19,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
   const [formData, setFormData] = useState({
     displayName: '',
     email: '',
-    phone: '',
+    phoneNumber: '',
     role: ''
   });
 
@@ -38,7 +38,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
             setFormData({
               displayName: sessionProfile.displayName || '',
               email: sessionProfile.email || '',
-              phone: sessionProfile.phone || '',
+              phoneNumber: sessionProfile.phoneNumber || '',
               role: sessionProfile.role || ''
             });
             return;
@@ -50,7 +50,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
               displayName: user.name || '',
               photoURL: user.image || '',
               role: (user as any).role || 'parent',
-              phone: '',
+              phoneNumber: '',
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               isActive: true
@@ -60,7 +60,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
             setFormData({
               displayName: userProfile.displayName || '',
               email: userProfile.email || '',
-              phone: userProfile.phone || '',
+              phoneNumber: userProfile.phoneNumber || '',
               role: userProfile.role || ''
             });
             return;
@@ -85,7 +85,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
               setFormData({
                 displayName: data.user.displayName || '',
                 email: data.user.email || '',
-                phone: data.user.phone || '',
+                phoneNumber: data.user.phoneNumber || '',
                 role: data.user.role || ''
               });
               return;
@@ -105,7 +105,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
                 setFormData({
                   displayName: emailData.user.displayName || '',
                   email: emailData.user.email || '',
-                  phone: emailData.user.phone || '',
+                  phoneNumber: emailData.user.phoneNumber || '',
                   role: emailData.user.role || ''
                 });
                 return;
@@ -120,7 +120,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
             setFormData({
               displayName: sessionProfile.displayName || '',
               email: sessionProfile.email || '',
-              phone: sessionProfile.phone || '',
+              phoneNumber: sessionProfile.phoneNumber || '',
               role: sessionProfile.role || ''
             });
           } else if (user) {
@@ -131,7 +131,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
               displayName: user.name || '',
               photoURL: user.image || '',
               role: (user as any).role || 'parent',
-              phone: '',
+              phoneNumber: '',
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               isActive: true
@@ -141,7 +141,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
             setFormData({
               displayName: userProfile.displayName || '',
               email: userProfile.email || '',
-              phone: userProfile.phone || '',
+              phoneNumber: userProfile.phoneNumber || '',
               role: userProfile.role || ''
             });
           } else {
@@ -157,7 +157,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
             setFormData({
               displayName: sessionProfile.displayName || '',
               email: sessionProfile.email || '',
-              phone: sessionProfile.phone || '',
+              phoneNumber: sessionProfile.phoneNumber || '',
               role: sessionProfile.role || ''
             });
           } else if (user) {
@@ -168,7 +168,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
               displayName: user.name || '',
               photoURL: user.image || '',
               role: (user as any).role || 'parent',
-              phone: '',
+              phoneNumber: '',
               createdAt: new Date().toISOString(),
               updatedAt: new Date().toISOString(),
               isActive: true
@@ -178,7 +178,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
             setFormData({
               displayName: userProfile.displayName || '',
               email: userProfile.email || '',
-              phone: userProfile.phone || '',
+              phoneNumber: userProfile.phoneNumber || '',
               role: userProfile.role || ''
             });
           } else {
@@ -347,14 +347,14 @@ export default function UserProfile({ userId }: UserProfileProps) {
               </div>
               
               <div>
-                <label htmlFor="phone" className="block text-sm font-medium text-gray-700">
+                <label htmlFor="phoneNumber" className="block text-sm font-medium text-gray-700">
                   Phone
                 </label>
                 <input
                   type="tel"
-                  id="phone"
-                  name="phone"
-                  value={formData.phone}
+                  id="phoneNumber"
+                  name="phoneNumber"
+                  value={formData.phoneNumber}
                   onChange={handleInputChange}
                   className="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-indigo-500 focus:ring-indigo-500 sm:text-sm"
                 />
@@ -414,7 +414,7 @@ export default function UserProfile({ userId }: UserProfileProps) {
               
               <div>
                 <h3 className="text-sm font-medium text-gray-500">Phone</h3>
-                <p className="mt-1 text-lg text-gray-900">{profile.phone || 'Not set'}</p>
+                <p className="mt-1 text-lg text-gray-900">{profile.phoneNumber || 'Not set'}</p>
               </div>
               
               <div>

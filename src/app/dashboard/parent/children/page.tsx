@@ -6,22 +6,35 @@ import { toast } from 'react-hot-toast';
 import { useAuth } from '@/hooks/useAuth';
 
 export default function ChildrenPage() {
-  const { userProfile } = useAuth();
+  const { userProfile, loading: authLoading } = useAuth();
   const [loading, setLoading] = useState(true);
-  const [children, setChildren] = useState([]);
-  const [error, setError] = useState(null);
+  const [children, setChildren] = useState<any[]>([]);
+  const [error, setError] = useState<string | null>(null);
 
   useEffect(() => {
     const fetchChildren = async () => {
+      if (authLoading) {
+        return;
+      }
+      
+      if (!userProfile?.id) {
+        setLoading(false);
+        setError('User not authenticated');
+        return;
+      }
+      
       try {
         setLoading(true);
-        const response = await fetch('/api/debug/children');
+        setError(null);
+        
+        const response = await fetch(`/api/debug/children?parentId=${userProfile.id}`);
         
         if (!response.ok) {
           throw new Error(`API error: ${response.status}`);
         }
         
         const data = await response.json();
+        
         if (data.success) {
           setChildren(data.children || []);
         } else {
@@ -29,22 +42,26 @@ export default function ChildrenPage() {
         }
       } catch (err) {
         console.error('Error fetching children:', err);
-        setError(err.message);
+        setError(err instanceof Error ? err.message : 'Failed to fetch children');
       } finally {
         setLoading(false);
       }
     };
 
     fetchChildren();
-  }, []);
+  }, [userProfile?.id, authLoading]);
 
-  const handleDeleteChild = async (childId) => {
+  const handleDeleteChild = async (childId: string) => {
     if (!confirm('Are you sure you want to remove this child profile?')) {
       return;
     }
     
+    if (!userProfile?.id) {
+      toast.error('User not authenticated');
+      return;
+    }
+    
     try {
-      // Use the debug API for reliable data access
       const response = await fetch(`/api/debug/children?id=${childId}`, {
         method: 'DELETE',
       });
@@ -57,8 +74,7 @@ export default function ChildrenPage() {
       
       if (result.success) {
         toast.success('Child deleted successfully');
-        // Refresh the children list
-        const updatedResponse = await fetch('/api/debug/children');
+        const updatedResponse = await fetch(`/api/debug/children?parentId=${userProfile.id}`);
         const updatedData = await updatedResponse.json();
         setChildren(updatedData.children || []);
       } else {
@@ -66,7 +82,7 @@ export default function ChildrenPage() {
       }
     } catch (err) {
       console.error('Error deleting child:', err);
-      toast.error(err.message || 'Failed to delete child');
+      toast.error(err instanceof Error ? err.message : 'Failed to delete child');
     }
   };
 
@@ -82,6 +98,12 @@ export default function ChildrenPage() {
     return (
       <div className="bg-red-50 border border-red-200 rounded-md p-4">
         <p className="text-red-800">Error loading children: {error}</p>
+        <button 
+          onClick={() => window.location.reload()} 
+          className="mt-2 text-blue-600 hover:text-blue-800"
+        >
+          Try Again
+        </button>
       </div>
     );
   }
@@ -90,9 +112,9 @@ export default function ChildrenPage() {
     <div className="px-4 sm:px-6 lg:px-8">
       <div className="sm:flex sm:items-center">
         <div className="sm:flex-auto">
-          <h1 className="text-2xl font-semibold text-gray-900">Children</h1>
+          <h1 className="text-2xl font-semibold text-gray-900">My Children</h1>
           <p className="mt-2 text-sm text-gray-700">
-            Manage your children's profiles
+            Manage your children's profiles ({children.length} children)
           </p>
         </div>
         <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
@@ -108,7 +130,21 @@ export default function ChildrenPage() {
       <div className="mt-8">
         {children.length === 0 ? (
           <div className="text-center py-12">
-            <p className="text-gray-500">No children found</p>
+            <div className="mx-auto h-12 w-12 text-gray-400">
+              <svg fill="none" viewBox="0 0 24 24" stroke="currentColor" aria-hidden="true">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4.354a4 4 0 110 5.292M15 21H3v-1a6 6 0 0112 0v1zm0 0h6v-1a6 6 0 00-9-5.197m13.5-9a2.5 2.5 0 11-5 0 2.5 2.5 0 015 0z" />
+              </svg>
+            </div>
+            <h3 className="mt-2 text-sm font-medium text-gray-900">No children</h3>
+            <p className="mt-1 text-sm text-gray-500">Get started by adding your first child.</p>
+            <div className="mt-6">
+              <Link
+                href="/dashboard/parent/children/add"
+                className="inline-flex items-center px-4 py-2 border border-transparent shadow-sm text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Add Child
+              </Link>
+            </div>
           </div>
         ) : (
           <div className="grid grid-cols-1 gap-6 sm:grid-cols-2 lg:grid-cols-3">

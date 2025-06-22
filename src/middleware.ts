@@ -7,21 +7,16 @@ const publicRoutes = ['/', '/auth/login', '/auth/register', '/auth/forgot-passwo
 export async function middleware(request: NextRequest) {
   const { pathname } = request.nextUrl;
   
-  // Skip middleware for static files and most API routes
+  // Skip middleware for static files and API routes
   if (
     pathname.startsWith('/_next') ||
     pathname.startsWith('/static') ||
-    (pathname.startsWith('/api') && !pathname.startsWith('/api/auth/signin')) ||
+    pathname.startsWith('/api') ||
     pathname.includes('.')
   ) {
     return NextResponse.next();
   }
   
-  // Handle NextAuth default signin page
-  if (pathname === '/api/auth/signin') {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
-  }
-
   // Check if the route is public
   if (publicRoutes.some(route => pathname === route || pathname.startsWith(`${route}/`))) {
     return NextResponse.next();
@@ -40,8 +35,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Get user role from token
-  const userRole = ((token as any).role || '').toLowerCase();
+  // Get user role from token, default to 'parent' if not set
+  const userRole = ((token as any).role || 'parent').toLowerCase();
   
   // If user is accessing a dashboard route
   if (pathname.startsWith('/dashboard/')) {
@@ -55,23 +50,8 @@ export async function middleware(request: NextRequest) {
     
     // For non-admin users, check if they're accessing their role's dashboard or sub-routes
     if (roleFromPath && roleFromPath !== userRole) {
-      console.log(`User with role ${userRole} attempting to access ${roleFromPath} dashboard. Redirecting to ${userRole} dashboard.`);
       return NextResponse.redirect(new URL(`/dashboard/${userRole}`, request.url));
     }
-    
-    // Allow access to sub-routes within user's role
-    return NextResponse.next();
-  }
-
-  // If user is authenticated but accessing the root, redirect to their dashboard
-  if (pathname === '/' && token) {
-    const defaultRole = userRole || 'parent';
-    return NextResponse.redirect(new URL(`/dashboard/${defaultRole}`, request.url));
-  }
-  
-  // If accessing /signin, redirect to /auth/login
-  if (pathname === '/signin') {
-    return NextResponse.redirect(new URL('/auth/login', request.url));
   }
 
   return NextResponse.next();

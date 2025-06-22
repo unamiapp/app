@@ -2,23 +2,19 @@
 
 import { useState, useEffect } from 'react';
 import { useParams, useRouter } from 'next/navigation';
-import { useChildren } from '@/hooks/useChildren';
-import { ChildProfile } from '@/types/child';
-import { useStorage } from '@/hooks/useStorage';
 import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
+import PhotoUpload from '@/components/ui/PhotoUpload';
 
 export default function EditChildPage() {
   const params = useParams();
   const router = useRouter();
-  const { children, loading: childrenLoading, error: childrenError, updateChild } = useChildren();
-  const { uploadFile } = useStorage();
   const { userProfile } = useAuth();
-  const [child, setChild] = useState<ChildProfile | null>(null);
+  const [child, setChild] = useState<any>(null);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const [isSubmitting, setIsSubmitting] = useState(false);
-  const [photoFile, setPhotoFile] = useState<File | null>(null);
+  const [photoURL, setPhotoURL] = useState('');
   
   const [formData, setFormData] = useState({
     firstName: '',
@@ -41,54 +37,66 @@ export default function EditChildPage() {
   });
 
   useEffect(() => {
-    if (!params.id) return;
-    
-    if (children.length > 0) {
-      const foundChild = children.find(c => c.id === params.id);
+    const fetchChild = async () => {
+      if (!params.id) return;
       
-      if (!foundChild) {
-        setError('Child not found');
-      } else {
-        setChild(foundChild);
+      try {
+        setLoading(true);
+        const response = await fetch(`/api/debug/children?id=${params.id}`);
         
-        // Initialize form data from child
-        setFormData({
-          firstName: foundChild.firstName || '',
-          lastName: foundChild.lastName || '',
-          dateOfBirth: foundChild.dateOfBirth || '',
-          gender: foundChild.gender || '',
-          identificationNumber: foundChild.identificationNumber || '',
-          street: foundChild.address?.street || '',
-          city: foundChild.address?.city || '',
-          province: foundChild.address?.province || '',
-          postalCode: foundChild.address?.postalCode || '',
-          schoolName: foundChild.schoolName || '',
-          bloodType: foundChild.medicalInfo?.bloodType || '',
-          allergies: (foundChild.medicalInfo?.allergies || []).join(', '),
-          conditions: (foundChild.medicalInfo?.conditions || []).join(', '),
-          medications: (foundChild.medicalInfo?.medications || []).join(', '),
-          emergencyContactName: foundChild.medicalInfo?.emergencyContact?.name || '',
-          emergencyContactRelationship: foundChild.medicalInfo?.emergencyContact?.relationship || '',
-          emergencyContactPhone: foundChild.medicalInfo?.emergencyContact?.phone || '',
-        });
+        if (!response.ok) {
+          throw new Error(`Failed to fetch child: ${response.status}`);
+        }
+        
+        const data = await response.json();
+        
+        if (data.success && data.child) {
+          const foundChild = data.child;
+          setChild(foundChild);
+          setPhotoURL(foundChild.photoURL || '');
+          
+          // Initialize form data from child
+          setFormData({
+            firstName: foundChild.firstName || '',
+            lastName: foundChild.lastName || '',
+            dateOfBirth: foundChild.dateOfBirth || '',
+            gender: foundChild.gender || '',
+            identificationNumber: foundChild.identificationNumber || '',
+            street: foundChild.address?.street || '',
+            city: foundChild.address?.city || '',
+            province: foundChild.address?.province || '',
+            postalCode: foundChild.address?.postalCode || '',
+            schoolName: foundChild.schoolName || '',
+            bloodType: foundChild.medicalInfo?.bloodType || '',
+            allergies: (foundChild.medicalInfo?.allergies || []).join(', '),
+            conditions: (foundChild.medicalInfo?.conditions || []).join(', '),
+            medications: (foundChild.medicalInfo?.medications || []).join(', '),
+            emergencyContactName: foundChild.medicalInfo?.emergencyContact?.name || '',
+            emergencyContactRelationship: foundChild.medicalInfo?.emergencyContact?.relationship || '',
+            emergencyContactPhone: foundChild.medicalInfo?.emergencyContact?.phone || '',
+          });
+        } else {
+          throw new Error(data.error || 'Failed to fetch child');
+        }
+      } catch (err) {
+        console.error('Error fetching child:', err);
+        setError(err instanceof Error ? err.message : 'Failed to fetch child');
+        toast.error('Failed to load child profile');
+      } finally {
+        setLoading(false);
       }
-      
-      setLoading(false);
-    } else if (!childrenLoading) {
-      setError('Child not found');
-      setLoading(false);
-    }
-  }, [params.id, children, childrenLoading]);
+    };
+
+    fetchChild();
+  }, [params.id]);
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
   };
 
-  const handlePhotoChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      setPhotoFile(e.target.files[0]);
-    }
+  const handlePhotoChange = (url: string) => {
+    setPhotoURL(url);
   };
 
   const handleSubmit = async (e: React.FormEvent) => {
@@ -106,23 +114,6 @@ export default function EditChildPage() {
         throw new Error('User not authenticated');
       }
       
-      let photoURL = child.photoURL || '';
-      
-      // If there's a new photo, upload it first
-      if (photoFile) {
-        try {
-          const fileName = `${userProfile.id}-${Date.now()}-${photoFile.name}`;
-          photoURL = await uploadFile(
-            photoFile, 
-            `child-images/${fileName}`
-          );
-          console.log("Photo uploaded successfully:", photoURL);
-        } catch (error) {
-          console.error('Error uploading photo:', error);
-          toast.error('Failed to upload photo, but will continue updating child profile.');
-        }
-      }
-      
       // Create child profile data
       const childData = {
         firstName: formData.firstName,
@@ -130,6 +121,7 @@ export default function EditChildPage() {
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender as 'male' | 'female' | 'other',
         photoURL: photoURL,
+        guardians: [userProfile.id],
         identificationNumber: formData.identificationNumber || '',
         schoolName: formData.schoolName || '',
         address: {
@@ -151,11 +143,28 @@ export default function EditChildPage() {
         },
       };
       
-      // Update the child profile
-      await updateChild(child.id, childData);
+      // Update the child profile using debug API
+      const response = await fetch(`/api/debug/children?id=${child.id}`, {
+        method: 'PUT',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(childData),
+      });
       
-      toast.success('Child profile updated successfully!');
-      router.push('/dashboard/parent/children');
+      if (!response.ok) {
+        const errorData = await response.json();
+        throw new Error(errorData.error || 'Failed to update child profile');
+      }
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        toast.success('Child profile updated successfully!');
+        router.push('/dashboard/parent/children');
+      } else {
+        throw new Error(result.message || 'Failed to update child profile');
+      }
     } catch (error) {
       console.error('Error updating child profile:', error);
       toast.error('Failed to update child profile. Please try again.');
@@ -164,7 +173,7 @@ export default function EditChildPage() {
     }
   };
 
-  if (loading || childrenLoading) {
+  if (loading) {
     return (
       <div className="flex justify-center items-center h-64">
         <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600"></div>
@@ -172,10 +181,10 @@ export default function EditChildPage() {
     );
   }
 
-  if (error || childrenError) {
+  if (error) {
     return (
       <div className="bg-red-50 border border-red-200 rounded-md p-4">
-        <p className="text-red-800">{error || childrenError?.message || 'Child not found'}</p>
+        <p className="text-red-800">{error}</p>
         <button
           onClick={() => router.push('/dashboard/parent/children')}
           className="mt-2 text-blue-600 hover:text-blue-800"
@@ -327,62 +336,15 @@ export default function EditChildPage() {
 
                 {/* Photo upload field */}
                 <div className="sm:col-span-6">
-                  <label htmlFor="photo" className="block text-sm font-medium text-gray-700">
+                  <label htmlFor="photo" className="block text-sm font-medium text-gray-700 mb-2">
                     Photo (optional)
                   </label>
-                  <div className="mt-1 flex items-center">
-                    {photoFile ? (
-                      <div className="relative">
-                        <img
-                          src={URL.createObjectURL(photoFile)}
-                          alt="Preview"
-                          className="h-32 w-32 rounded-full object-cover"
-                        />
-                        <button
-                          type="button"
-                          onClick={() => setPhotoFile(null)}
-                          className="absolute top-0 right-0 -mt-2 -mr-2 bg-red-500 text-white rounded-full p-1"
-                        >
-                          <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-                          </svg>
-                        </button>
-                      </div>
-                    ) : child.photoURL ? (
-                      <div className="relative">
-                        <img
-                          src={child.photoURL}
-                          alt="Child"
-                          className="h-32 w-32 rounded-full object-cover"
-                        />
-                      </div>
-                    ) : (
-                      <div className="h-32 w-32 rounded-full bg-gray-200 flex items-center justify-center">
-                        <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                        </svg>
-                      </div>
-                    )}
-                    <div className="ml-5">
-                      <div className="relative bg-white py-2 px-3 border border-gray-300 rounded-md shadow-sm flex items-center cursor-pointer hover:bg-gray-50 focus-within:outline-none focus-within:ring-2 focus-within:ring-offset-2 focus-within:ring-blue-500">
-                        <label
-                          htmlFor="photo-upload"
-                          className="relative text-sm font-medium text-gray-700 pointer-events-none"
-                        >
-                          <span>Change photo</span>
-                          <span className="sr-only"> photo</span>
-                        </label>
-                        <input
-                          id="photo-upload"
-                          name="photo-upload"
-                          type="file"
-                          accept="image/*"
-                          className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                          onChange={handlePhotoChange}
-                        />
-                      </div>
-                    </div>
-                  </div>
+                  <PhotoUpload
+                    onPhotoChange={handlePhotoChange}
+                    path="child-photos"
+                    className="h-32 w-32"
+                    initialPhotoURL={photoURL}
+                  />
                 </div>
               </div>
             </div>

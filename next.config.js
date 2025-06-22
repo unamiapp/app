@@ -69,6 +69,16 @@ const nextConfig = {
   },
   // Configure webpack for optimization
   webpack: (config, { dev, isServer }) => {
+    // Fix for 'self is not defined' error
+    if (isServer) {
+      config.resolve.fallback = {
+        ...config.resolve.fallback,
+        fs: false,
+        net: false,
+        tls: false,
+      };
+    }
+    
     // Optimize production builds
     if (!dev) {
       // Split chunks for better caching

@@ -60,10 +60,10 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           // Fallback to session data
           const profile: UserProfile = {
             id: userId,
-            email: session.user.email || '',
-            displayName: session.user.name || '',
-            photoURL: session.user.image || undefined,
-            role: (session.user as any).role || 'parent',
+            email: session.user?.email || '',
+            displayName: session.user?.name || '',
+            photoURL: session.user?.image || undefined,
+            role: (session.user as any)?.role || 'parent',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             isActive: true,
@@ -75,11 +75,11 @@ export const AuthProvider = ({ children }: { children: React.ReactNode }) => {
           
           // Fallback to session data
           const profile: UserProfile = {
-            id: (session.user as any).id || 'unknown',
-            email: session.user.email || '',
-            displayName: session.user.name || '',
-            photoURL: session.user.image || undefined,
-            role: (session.user as any).role || 'parent',
+            id: (session.user as any)?.id || 'unknown',
+            email: session.user?.email || '',
+            displayName: session.user?.name || '',
+            photoURL: session.user?.image || undefined,
+            role: (session.user as any)?.role || 'parent',
             createdAt: new Date().toISOString(),
             updatedAt: new Date().toISOString(),
             isActive: true,
