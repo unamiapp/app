@@ -55,61 +55,56 @@ export const authOptions: NextAuthOptions = {
                 roles: ['admin', credentials.role || 'admin'].filter((v, i, a) => a.indexOf(v) === i),
               };
             }
+          }
+          
+          // For all users (including admin), try to authenticate with Firebase
+          try {
+            // Get user from Firebase
+            const userRecord = await adminAuth.getUserByEmail(credentials.email);
             
-            try {
-              // Get admin user from Firebase
-              const adminUser = await adminAuth.getUserByEmail(credentials.email);
-              
-              // Get user claims to check roles
-              const userRecord = await adminAuth.getUser(adminUser.uid);
-              const customClaims = userRecord.customClaims || {};
-              
-              // Determine role based on passed role or default to admin
-              let role = credentials.role || 'admin';
-              
-              // For admin users, allow role switching
-              if (customClaims.role === 'admin' || (customClaims.roles && customClaims.roles.includes('admin'))) {
-                console.log('Admin user switching to role:', role);
-              } else {
-                // For non-admin users, enforce their assigned role
-                role = customClaims.role || 'parent';
-                console.log('Non-admin user using assigned role:', role);
-              }
-              
-              return {
-                id: adminUser.uid,
-                email: adminUser.email,
-                name: adminUser.displayName || 'User',
-                role: role as UserRole,
-                roles: customClaims.roles || [role],
-              };
-            } catch (error) {
-              console.error('Admin authentication error:', error);
-              return null;
+            // Get user claims to check roles
+            const customClaims = userRecord.customClaims || {};
+            
+            // Determine role based on passed role or user's assigned role
+            let role = credentials.role || customClaims.role || 'parent';
+            
+            // For admin users, allow role switching
+            if (credentials.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || 
+                customClaims.role === 'admin' || 
+                (customClaims.roles && customClaims.roles.includes('admin'))) {
+              console.log('Admin user switching to role:', role);
+            } else {
+              // For non-admin users, enforce their assigned role
+              role = customClaims.role || 'parent';
+              console.log('Non-admin user using assigned role:', role);
             }
-          } else {
-            // For non-admin users, try to authenticate with Firebase
-            try {
-              // Get user from Firebase
-              const userRecord = await adminAuth.getUserByEmail(credentials.email);
+            
+            return {
+              id: userRecord.uid,
+              email: userRecord.email,
+              name: userRecord.displayName || userRecord.email?.split('@')[0] || 'User',
+              role: role as UserRole,
+              roles: customClaims.roles || [role],
+            };
+          } catch (firebaseError) {
+            console.error('Firebase authentication error:', firebaseError);
+            
+            // If user doesn't exist in Firebase, create a temporary user for demo purposes
+            // This should be removed in production and users should be properly registered
+            if (credentials.password === 'demo123' || credentials.password === 'Proof321#') {
+              console.log('Creating temporary user for demo:', credentials.email);
               
-              // Get user claims to check roles
-              const customClaims = userRecord.customClaims || {};
-              
-              // Use the user's assigned role
-              const role = customClaims.role || 'parent';
-              
+              const role = credentials.role || 'parent';
               return {
-                id: userRecord.uid,
-                email: userRecord.email,
-                name: userRecord.displayName || 'User',
+                id: `temp-${credentials.email.replace('@', '-').replace('.', '-')}`,
+                email: credentials.email,
+                name: credentials.email.split('@')[0],
                 role: role as UserRole,
-                roles: customClaims.roles || [role],
+                roles: [role],
               };
-            } catch (error) {
-              console.error('User authentication error:', error);
-              return null;
             }
+            
+            return null;
           }
         } catch (error) {
           console.error('Authentication error:', error);
@@ -173,25 +168,27 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      // Handle GitHub Codespaces URLs
-      if (url.includes('.app.github.dev')) {
-        // If it's a login callback, redirect to dashboard
-        if (url.includes('/api/auth/callback')) {
-          const urlObj = new URL(url);
-          return `${urlObj.origin}/dashboard`;
-        }
-      }
+      console.log('Redirect called with:', { url, baseUrl });
       
       // If the URL is a dashboard URL, use it directly
       if (url.includes('/dashboard/')) {
+        console.log('Redirecting to dashboard URL:', url);
         return url;
       }
       
-      // If it's a generic dashboard URL, let the middleware handle it
-      if (url === `${baseUrl}/dashboard`) {
-        return url;
+      // If it's a generic dashboard URL, redirect to admin dashboard by default
+      if (url === `${baseUrl}/dashboard` || url.endsWith('/dashboard')) {
+        console.log('Redirecting to admin dashboard');
+        return `${baseUrl}/dashboard/admin`;
       }
       
+      // For login callbacks, redirect to dashboard
+      if (url.includes('/api/auth/callback')) {
+        console.log('Login callback, redirecting to dashboard');
+        return `${baseUrl}/dashboard`;
+      }
+      
+      console.log('Default redirect to:', url);
       return url;
     }
   },

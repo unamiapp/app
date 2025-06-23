@@ -33,7 +33,8 @@ export default function LoginPage() {
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
     try {
-      // Use window.location for direct navigation
+      console.log('Attempting login with:', { email: data.email, role: data.role || 'admin' });
+      
       const result = await signIn('credentials', {
         redirect: false,
         email: data.email,
@@ -41,15 +42,28 @@ export default function LoginPage() {
         role: data.role || 'admin'
       });
       
+      console.log('SignIn result:', result);
+      
       if (result?.error) {
+        console.error('SignIn error:', result.error);
+        if (result.error === 'CredentialsSignin') {
+          throw new Error('Invalid email or password. Please check your credentials.');
+        }
         throw new Error(result.error);
       }
       
-      toast.success('Signed in successfully!');
-      
-      // Use window.location for direct navigation
-      const redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/admin';
-      window.location.href = redirectTo;
+      if (result?.ok) {
+        toast.success('Signed in successfully!');
+        
+        // Wait a moment for the session to be established
+        setTimeout(() => {
+          const redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/admin';
+          console.log('Redirecting to:', redirectTo);
+          window.location.href = redirectTo;
+        }, 500);
+      } else {
+        throw new Error('Login failed. Please try again.');
+      }
     } catch (error: any) {
       console.error('Login error:', error);
       toast.error(error.message || 'Failed to login. Please check your credentials.');
@@ -224,6 +238,15 @@ export default function LoginPage() {
               >
                 Authority
               </button>
+            </div>
+            <div className="mt-4 p-3 bg-gray-50 rounded-md">
+              <p className="text-xs text-gray-600 mb-2">
+                <strong>Demo Credentials:</strong>
+              </p>
+              <p className="text-xs text-gray-600">
+                Admin: info@unamifoundation.org / Proof321#<br/>
+                Demo: any-email@example.com / demo123
+              </p>
             </div>
             <p className="mt-2 text-xs text-center text-gray-500">
               Select your role before signing in
