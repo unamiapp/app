@@ -34,9 +34,9 @@ export default function LoginPage() {
       }
       
       console.log('User already authenticated, redirecting to:', redirectTo);
-      router.push(redirectTo);
+      window.location.replace(redirectTo);
     }
-  }, [session, status, router]);
+  }, [session, status]);
   
   const {
     register,
@@ -52,52 +52,32 @@ export default function LoginPage() {
   
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    try {
-      console.log('Attempting login with:', { email: data.email, role: data.role || 'admin' });
-      
-      const result = await signIn('credentials', {
-        redirect: false,
-        email: data.email,
-        password: data.password,
-        role: data.role || 'admin'
-      });
-      
-      console.log('SignIn result:', result);
-      
-      if (result?.error) {
-        console.error('SignIn error:', result.error);
-        if (result.error === 'CredentialsSignin') {
-          throw new Error('Invalid email or password. Please check your credentials.');
-        }
-        throw new Error(result.error);
-      }
-      
-      if (result?.ok) {
-        toast.success('Signed in successfully!');
-        
-        // Get the callback URL from the URL params or use default
-        const urlParams = new URLSearchParams(window.location.search);
-        const callbackUrl = urlParams.get('callbackUrl');
-        
-        let redirectTo;
-        if (callbackUrl) {
-          redirectTo = decodeURIComponent(callbackUrl);
-        } else {
-          redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/admin';
-        }
-        
-        console.log('Redirecting to:', redirectTo);
-        
-        // Force a hard redirect to ensure proper navigation
-        window.location.href = redirectTo;
-      } else {
-        throw new Error('Login failed. Please try again.');
-      }
-    } catch (error: any) {
-      console.error('Login error:', error);
-      toast.error(error.message || 'Failed to login. Please check your credentials.');
-      setIsLoading(false);
+    
+    // Get the callback URL from the URL params or use default
+    const urlParams = new URLSearchParams(window.location.search);
+    const callbackUrl = urlParams.get('callbackUrl');
+    
+    let redirectTo;
+    if (callbackUrl) {
+      redirectTo = decodeURIComponent(callbackUrl);
+    } else {
+      redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/admin';
     }
+    
+    console.log('Attempting login with redirect to:', redirectTo);
+    
+    // Use NextAuth's built-in redirect functionality
+    const result = await signIn('credentials', {
+      email: data.email,
+      password: data.password,
+      role: data.role || 'admin',
+      callbackUrl: redirectTo
+    });
+    
+    // If we reach here, there was an error (successful login would have redirected)
+    console.error('Login failed:', result);
+    toast.error('Login failed. Please check your credentials.');
+    setIsLoading(false);
   };
 
   return (

@@ -168,28 +168,18 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      console.log('Redirect called with:', { url, baseUrl });
+      console.log('NextAuth redirect:', { url, baseUrl });
       
-      // If the URL is a dashboard URL, use it directly
-      if (url.includes('/dashboard/')) {
-        console.log('Redirecting to dashboard URL:', url);
+      // Always allow dashboard URLs
+      if (url.startsWith(baseUrl) && url.includes('/dashboard/')) {
+        console.log('Allowing dashboard redirect:', url);
         return url;
       }
       
-      // If it's a generic dashboard URL, redirect to admin dashboard by default
-      if (url === `${baseUrl}/dashboard` || url.endsWith('/dashboard')) {
-        console.log('Redirecting to admin dashboard');
-        return `${baseUrl}/dashboard/admin`;
-      }
-      
-      // For login callbacks, redirect to dashboard
-      if (url.includes('/api/auth/callback')) {
-        console.log('Login callback, redirecting to dashboard');
-        return `${baseUrl}/dashboard`;
-      }
-      
-      console.log('Default redirect to:', url);
-      return url;
+      // Default to admin dashboard for any other case
+      const defaultUrl = `${baseUrl}/dashboard/admin`;
+      console.log('Using default redirect:', defaultUrl);
+      return defaultUrl;
     }
   },
   pages: {
