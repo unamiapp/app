@@ -1,11 +1,11 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import { signIn } from 'next-auth/react';
+import { signIn, useSession } from 'next-auth/react';
 
 interface LoginFormData {
   email: string;
@@ -15,8 +15,28 @@ interface LoginFormData {
 
 export default function LoginPage() {
   const router = useRouter();
+  const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
+  
+  // Check if user is already authenticated and redirect
+  useEffect(() => {
+    if (status === 'authenticated' && session?.user) {
+      const urlParams = new URLSearchParams(window.location.search);
+      const callbackUrl = urlParams.get('callbackUrl');
+      
+      let redirectTo;
+      if (callbackUrl) {
+        redirectTo = decodeURIComponent(callbackUrl);
+      } else {
+        const userRole = (session.user as any)?.role || 'admin';
+        redirectTo = `/dashboard/${userRole}`;
+      }
+      
+      console.log('User already authenticated, redirecting to:', redirectTo);
+      router.push(redirectTo);
+    }
+  }, [session, status, router]);
   
   const {
     register,
@@ -55,12 +75,21 @@ export default function LoginPage() {
       if (result?.ok) {
         toast.success('Signed in successfully!');
         
-        // Wait a moment for the session to be established
-        setTimeout(() => {
-          const redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/admin';
-          console.log('Redirecting to:', redirectTo);
-          window.location.href = redirectTo;
-        }, 500);
+        // Get the callback URL from the URL params or use default
+        const urlParams = new URLSearchParams(window.location.search);
+        const callbackUrl = urlParams.get('callbackUrl');
+        
+        let redirectTo;
+        if (callbackUrl) {
+          redirectTo = decodeURIComponent(callbackUrl);
+        } else {
+          redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/admin';
+        }
+        
+        console.log('Redirecting to:', redirectTo);
+        
+        // Force a hard redirect to ensure proper navigation
+        window.location.href = redirectTo;
       } else {
         throw new Error('Login failed. Please try again.');
       }
