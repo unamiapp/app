@@ -4,8 +4,15 @@ export interface ChildProfile {
   lastName: string;
   dateOfBirth: string;
   gender: 'male' | 'female' | 'other';
-  guardians?: string[];
+  
+  // Hybrid parent-child relationship model
+  parentId?: string;        // New direct parent relationship (preferred)
+  guardians?: string[];     // Legacy guardians array (for backward compatibility)
+  
+  // School relationship
   schoolName?: string;
+  schoolId?: string;        // Direct school relationship for school dashboard
+  
   photoURL?: string;
   identificationNumber?: string;
   address?: {

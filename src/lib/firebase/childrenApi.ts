@@ -8,26 +8,75 @@ import { ChildProfile } from '@/types/child';
 import { CollectionReference, Query, DocumentData } from 'firebase-admin/firestore';
 
 /**
- * Get all children with optional filtering by parent ID
+ * Get all children
  */
-export async function getChildren(parentId?: string): Promise<ChildProfile[]> {
+export async function getChildren(): Promise<ChildProfile[]> {
   try {
-    // Build query based on filters
-    let query: CollectionReference<DocumentData> | Query<DocumentData> = adminDb.collection('children');
-    
-    // Apply parent filter if provided
-    if (parentId) {
-      query = query.where('guardians', 'array-contains', parentId);
-    }
-    
-    const snapshot = await query.get();
+    const snapshot = await adminDb.collection('children').get();
     
     return snapshot.docs.map(doc => ({
       id: doc.id,
       ...doc.data()
     } as ChildProfile));
   } catch (error) {
-    console.error('Error fetching children:', error);
+    console.error('Error fetching all children:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get children by parent ID - supports both parentId and guardians array
+ */
+export async function getChildrenByParentId(parentId: string): Promise<ChildProfile[]> {
+  try {
+    // Try new parentId field first
+    let snapshot = await adminDb.collection('children')
+      .where('parentId', '==', parentId)
+      .get();
+    
+    let children = snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ChildProfile));
+    
+    // Also check legacy guardians array for backward compatibility
+    const legacySnapshot = await adminDb.collection('children')
+      .where('guardians', 'array-contains', parentId)
+      .get();
+    
+    const legacyChildren = legacySnapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ChildProfile));
+    
+    // Combine results and remove duplicates
+    const allChildren = [...children, ...legacyChildren];
+    const uniqueChildren = allChildren.filter((child, index, self) => 
+      index === self.findIndex(c => c.id === child.id)
+    );
+    
+    return uniqueChildren;
+  } catch (error) {
+    console.error('Error fetching children by parent ID:', error);
+    throw error;
+  }
+}
+
+/**
+ * Get children by school ID
+ */
+export async function getChildrenBySchool(schoolId: string): Promise<ChildProfile[]> {
+  try {
+    const snapshot = await adminDb.collection('children')
+      .where('schoolId', '==', schoolId)
+      .get();
+    
+    return snapshot.docs.map(doc => ({
+      id: doc.id,
+      ...doc.data()
+    } as ChildProfile));
+  } catch (error) {
+    console.error('Error fetching children by school ID:', error);
     throw error;
   }
 }
@@ -65,6 +114,12 @@ export async function createChild(childData: Omit<ChildProfile, 'id'>): Promise<
       createdAt: now,
       updatedAt: now
     };
+    
+    // Ensure we have either parentId or guardians for backward compatibility
+    if (!data.parentId && data.guardians && data.guardians.length > 0) {
+      // If no parentId but guardians exist, use first guardian as parentId
+      data.parentId = data.guardians[0];
+    }
     
     // Create child in Firestore
     const childRef = adminDb.collection('children').doc();

@@ -1,18 +1,19 @@
 'use client';
 
 import { useEffect, useState } from 'react';
-import { useAuth } from '@/hooks/useAuth';
+import { useSession, signOut } from 'next-auth/react';
+import { useRouter } from 'next/navigation';
 import Link from 'next/link';
 import RoleSwitcher from '@/components/RoleSwitcher';
 import Footer from '@/components/layout/Footer';
-import UserProfilePhoto from '@/components/profile/UserProfilePhoto';
 
 export default function DashboardLayout({
   children,
 }: {
   children: React.ReactNode;
 }) {
-  const { userProfile, loading, logout } = useAuth();
+  const { data: session, status } = useSession();
+  const router = useRouter();
   const [mounted, setMounted] = useState(false);
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
@@ -49,13 +50,13 @@ export default function DashboardLayout({
   
   const handleLogout = async () => {
     try {
-      await logout();
+      await signOut({ callbackUrl: '/auth/login' });
     } catch (error) {
       console.error('Error logging out:', error);
     }
   };
   
-  if (!mounted || loading) {
+  if (!mounted || status === 'loading') {
     return (
       <div className="min-h-screen bg-slate-50 flex">
         <div className="w-64 bg-white border-r border-slate-200 hidden md:block">
@@ -101,8 +102,14 @@ export default function DashboardLayout({
     );
   }
   
-  // Get user role from profile
-  const userRole = userProfile?.role || 'guest';
+  // Get user role and profile from session
+  const userRole = (session?.user as any)?.role || 'guest';
+  const userProfile = {
+    displayName: session?.user?.name || '',
+    photoURL: session?.user?.image || '',
+    role: userRole,
+    id: (session?.user as any)?.id || ''
+  };
   
   // Define navigation based on user role
   const getNavigation = () => {
@@ -110,7 +117,6 @@ export default function DashboardLayout({
       case 'parent':
         return [
           { name: 'Dashboard', href: '/dashboard/parent' },
-          { name: 'Children', href: '/dashboard/parent/children' },
           { name: 'Alerts', href: '/dashboard/parent/alerts' },
           { name: 'Report', href: '/dashboard/parent/report' },
           { name: 'Profile', href: '/dashboard/parent/profile' },

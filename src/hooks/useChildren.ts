@@ -10,6 +10,7 @@ export interface CreateChildData {
   lastName: string;
   dateOfBirth: string;
   gender: string;
+  parentId?: string;
   schoolName?: string;
   schoolId?: string;
   address?: {
@@ -41,7 +42,7 @@ export const useChildren = () => {
   const [error, setError] = useState<Error | null>(null);
   const { userProfile } = useAuth();
 
-  // Fetch children based on role
+  // Fetch children based on role using hybrid access control
   const fetchChildren = useCallback(async () => {
     if (!userProfile) {
       console.log('fetchChildren: No user profile, skipping fetch');
@@ -55,20 +56,9 @@ export const useChildren = () => {
     try {
       console.log('Fetching children for user:', userProfile.id, 'with role:', userProfile.role);
       
-      // Try the debug endpoint first to see if we can get any children
-      try {
-        const debugResponse = await fetch('/api/debug/children');
-        const debugData = await debugResponse.json();
-        console.log('Debug API response:', debugData);
-      } catch (debugError) {
-        console.error('Debug API error:', debugError);
-      }
-      
-      // Add a timestamp to prevent caching
-      const timestamp = new Date().getTime();
-      // If user is a parent, filter children by parent ID
-      const parentFilter = userProfile.role === 'parent' ? `&parentId=${userProfile.id}` : '';
-      const response = await fetch(`/api/admin-sdk/children?_t=${timestamp}${parentFilter}`);
+      // Use admin-sdk API with hybrid access control
+      // API automatically filters based on user role and relationships
+      const response = await fetch('/api/admin-sdk/children');
       
       console.log('API response status:', response.status);
       
@@ -112,9 +102,15 @@ export const useChildren = () => {
         throw new Error('User not authenticated');
       }
       
-      // Ensure guardians includes current user if parent
-      if (userProfile.role === 'parent' && (!childData.guardians || !childData.guardians.includes(userProfile.id))) {
-        childData.guardians = [...(childData.guardians || []), userProfile.id];
+      // Set up hybrid parent-child relationship for parents
+      if (userProfile.role === 'parent') {
+        // Set parentId for new model
+        childData.parentId = userProfile.id;
+        
+        // Maintain guardians array for backward compatibility
+        if (!childData.guardians || !childData.guardians.includes(userProfile.id)) {
+          childData.guardians = [...(childData.guardians || []), userProfile.id];
+        }
       }
       
       console.log('Creating child with data:', {
@@ -157,10 +153,10 @@ export const useChildren = () => {
   const updateChild = async (id: string, childData: Partial<ChildProfile>): Promise<ChildProfile> => {
     try {
       console.log('Updating child:', id);
-      const response = await fetch('/api/admin-sdk/children', {
+      const response = await fetch(`/api/admin-sdk/children?id=${id}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id, ...childData }),
+        body: JSON.stringify(childData),
       });
       
       if (!response.ok) {

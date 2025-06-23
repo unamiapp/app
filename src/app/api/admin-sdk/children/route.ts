@@ -1,11 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
-import { getChildren, getChildById, createChild, updateChild, deleteChild } from '@/lib/firebase/childrenApi';
+import { getChildren, getChildById, createChild, updateChild, deleteChild, getChildrenByParentId, getChildrenBySchool } from '@/lib/firebase/childrenApi';
 
 export async function GET(request: NextRequest) {
   try {
-    // Get the session to check authentication
+    // 1. Get session and verify authentication
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
@@ -15,15 +15,19 @@ export async function GET(request: NextRequest) {
       }, { status: 401 });
     }
     
+    // 2. Get user role and ID for hybrid access control
+    const userRole = (session.user as any).role;
+    const userId = (session.user as any).id;
+    
     // Get query parameters
     const { searchParams } = new URL(request.url);
     const id = searchParams.get('id');
     const page = parseInt(searchParams.get('page') || '1', 10);
     const limit = parseInt(searchParams.get('limit') || '10', 10);
-    const parentId = searchParams.get('parentId') || (session.user as any).id;
     
+    // 3. Handle specific child request
     if (id) {
-      // Get a specific child by ID
+      // Get the child
       const child = await getChildById(id);
       
       if (!child) {
@@ -33,12 +37,19 @@ export async function GET(request: NextRequest) {
         }, { status: 404 });
       }
       
-      // Check if the user has access to this child
-      const userRole = (session.user as any).role;
-      if (userRole !== 'admin' && 
-          userRole !== 'authority' && 
-          userRole !== 'school' && 
-          (!child.guardians || !child.guardians.includes(parentId))) {
+      // 4. Hybrid access control - role + relationship
+      const hasAccess = 
+        userRole === 'admin' || 
+        userRole === 'authority' || 
+        (userRole === 'school' && child.schoolId === (session.user as any).schoolId) ||
+        (userRole === 'parent' && (
+          // New parentId model
+          child.parentId === userId ||
+          // Legacy guardians model
+          (child.guardians && child.guardians.includes(userId))
+        ));
+      
+      if (!hasAccess) {
         return NextResponse.json({ 
           success: false, 
           error: 'Unauthorized access to this child' 
@@ -51,10 +62,22 @@ export async function GET(request: NextRequest) {
       });
     }
     
-    // Get all children with optional parent filter
-    let children = await getChildren(
-      (session.user as any).role === 'parent' ? parentId : undefined
-    );
+    // 5. Handle children listing with role-appropriate filtering
+    let children: any[] = [];
+    
+    if (userRole === 'admin' || userRole === 'authority') {
+      // Admins and authorities can see all children
+      children = await getChildren();
+    } else if (userRole === 'school') {
+      // Schools can see children in their school
+      const schoolId = (session.user as any).schoolId;
+      if (schoolId) {
+        children = await getChildrenBySchool(schoolId);
+      }
+    } else if (userRole === 'parent') {
+      // Parents can only see their own children
+      children = await getChildrenByParentId(userId);
+    }
     
     // Calculate pagination
     const totalCount = children.length;
@@ -82,7 +105,7 @@ export async function GET(request: NextRequest) {
 
 export async function POST(request: NextRequest) {
   try {
-    // Get the session to check authentication
+    // 1. Get session and verify authentication
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
@@ -92,8 +115,10 @@ export async function POST(request: NextRequest) {
       }, { status: 401 });
     }
     
-    // Check if user can create children
+    // 2. Check role-based access control
     const userRole = (session.user as any).role;
+    const userId = (session.user as any).id;
+    
     if (userRole !== 'parent' && userRole !== 'admin') {
       return NextResponse.json({ 
         success: false, 
@@ -111,17 +136,26 @@ export async function POST(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // Ensure guardians includes current user if parent
-    let guardians = data.guardians || [];
-    if (userRole === 'parent' && !guardians.includes((session.user as any).id)) {
-      guardians = [...guardians, (session.user as any).id];
+    // 3. Set up hybrid parent-child relationship
+    let childData = { ...data };
+    
+    if (userRole === 'parent') {
+      // For parents, set both parentId (new model) and guardians (legacy model)
+      childData.parentId = userId;
+      
+      // Maintain guardians array for backward compatibility
+      let guardians = data.guardians || [];
+      if (!guardians.includes(userId)) {
+        guardians = [...guardians, userId];
+      }
+      childData.guardians = guardians;
     }
     
+    // Set createdBy for audit trail
+    childData.createdBy = userId;
+    
     // Create child
-    const child = await createChild({
-      ...data,
-      guardians
-    });
+    const child = await createChild(childData);
     
     return NextResponse.json({ 
       success: true, 
@@ -139,7 +173,7 @@ export async function POST(request: NextRequest) {
 
 export async function PUT(request: NextRequest) {
   try {
-    // Get the session to check authentication
+    // 1. Get session and verify authentication
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
@@ -159,7 +193,7 @@ export async function PUT(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // Get the child to check access
+    // 2. Get the child to check access
     const existingChild = await getChildById(id);
     
     if (!existingChild) {
@@ -169,12 +203,21 @@ export async function PUT(request: NextRequest) {
       }, { status: 404 });
     }
     
-    // Check if the user has access to this child
+    // 3. Hybrid access control - role + relationship
     const userRole = (session.user as any).role;
     const userId = (session.user as any).id;
     
-    if (userRole !== 'admin' && 
-        (!existingChild.guardians || !existingChild.guardians.includes(userId))) {
+    const hasAccess = 
+      userRole === 'admin' || 
+      (userRole === 'school' && existingChild.schoolId === (session.user as any).schoolId) ||
+      (userRole === 'parent' && (
+        // New parentId model
+        existingChild.parentId === userId ||
+        // Legacy guardians model
+        (existingChild.guardians && existingChild.guardians.includes(userId))
+      ));
+    
+    if (!hasAccess) {
       return NextResponse.json({ 
         success: false, 
         error: 'Unauthorized access to this child' 
@@ -202,7 +245,7 @@ export async function PUT(request: NextRequest) {
 
 export async function DELETE(request: NextRequest) {
   try {
-    // Get the session to check authentication
+    // 1. Get session and verify authentication
     const session = await getServerSession(authOptions);
     
     if (!session?.user) {
@@ -222,7 +265,7 @@ export async function DELETE(request: NextRequest) {
       }, { status: 400 });
     }
     
-    // Get the child to check access
+    // 2. Get the child to check access
     const existingChild = await getChildById(id);
     
     if (!existingChild) {
@@ -232,12 +275,20 @@ export async function DELETE(request: NextRequest) {
       }, { status: 404 });
     }
     
-    // Check if the user has access to this child
+    // 3. Hybrid access control - role + relationship
     const userRole = (session.user as any).role;
     const userId = (session.user as any).id;
     
-    if (userRole !== 'admin' && 
-        (!existingChild.guardians || !existingChild.guardians.includes(userId))) {
+    const hasAccess = 
+      userRole === 'admin' || 
+      (userRole === 'parent' && (
+        // New parentId model
+        existingChild.parentId === userId ||
+        // Legacy guardians model
+        (existingChild.guardians && existingChild.guardians.includes(userId))
+      ));
+    
+    if (!hasAccess) {
       return NextResponse.json({ 
         success: false, 
         error: 'Unauthorized access to this child' 
