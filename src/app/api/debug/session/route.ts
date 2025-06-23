@@ -2,13 +2,14 @@ import { NextRequest, NextResponse } from 'next/server';
 import { getServerSession } from 'next-auth/next';
 import { authOptions } from '@/lib/auth';
 
+export const dynamic = 'force-dynamic';
+
 export async function GET(request: NextRequest) {
   try {
     const session = await getServerSession(authOptions);
     
     return NextResponse.json({
       success: true,
-      session: session,
       hasSession: !!session,
       user: session?.user || null,
       timestamp: new Date().toISOString()

@@ -19,22 +19,17 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  // Check if user is already authenticated and redirect
+  // Only redirect if user is authenticated and not loading
   useEffect(() => {
     if (status === 'authenticated' && session?.user) {
       const urlParams = new URLSearchParams(window.location.search);
       const callbackUrl = urlParams.get('callbackUrl');
       
-      let redirectTo;
       if (callbackUrl) {
-        redirectTo = decodeURIComponent(callbackUrl);
-      } else {
-        const userRole = (session.user as any)?.role || 'admin';
-        redirectTo = `/dashboard/${userRole}`;
+        const redirectTo = decodeURIComponent(callbackUrl);
+        console.log('User already authenticated, redirecting to callback:', redirectTo);
+        window.location.replace(redirectTo);
       }
-      
-      console.log('User already authenticated, redirecting to:', redirectTo);
-      window.location.replace(redirectTo);
     }
   }, [session, status]);
   

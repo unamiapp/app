@@ -30,11 +30,6 @@ export async function middleware(request: NextRequest) {
 
   // If no token and not on a public route, redirect to login
   if (!token) {
-    // Don't redirect if already on login page to prevent loops
-    if (pathname === '/auth/login') {
-      return NextResponse.next();
-    }
-    
     const url = new URL('/auth/login', request.url);
     url.searchParams.set('callbackUrl', encodeURI(request.url));
     return NextResponse.redirect(url);
@@ -43,16 +38,13 @@ export async function middleware(request: NextRequest) {
   // Get user role from token, default to 'admin' if not set
   const userRole = ((token as any).role || 'admin').toLowerCase();
   
-  console.log('Middleware - User role:', userRole, 'Path:', pathname);
-  
   // If user is accessing a dashboard route
   if (pathname.startsWith('/dashboard/')) {
     const pathParts = pathname.split('/');
-    const roleFromPath = pathParts[2]?.toLowerCase(); // e.g., /dashboard/admin -> admin
+    const roleFromPath = pathParts[2]?.toLowerCase();
     
     // If accessing /dashboard without a role, redirect to user's role dashboard
     if (pathname === '/dashboard' || pathname === '/dashboard/') {
-      console.log('Redirecting from /dashboard to:', `/dashboard/${userRole}`);
       return NextResponse.redirect(new URL(`/dashboard/${userRole}`, request.url));
     }
     
@@ -61,9 +53,8 @@ export async function middleware(request: NextRequest) {
       return NextResponse.next();
     }
     
-    // For non-admin users, check if they're accessing their role's dashboard or sub-routes
+    // For non-admin users, check if they're accessing their role's dashboard
     if (roleFromPath && roleFromPath !== userRole) {
-      console.log('Role mismatch, redirecting to:', `/dashboard/${userRole}`);
       return NextResponse.redirect(new URL(`/dashboard/${userRole}`, request.url));
     }
   }

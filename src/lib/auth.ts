@@ -168,18 +168,18 @@ export const authOptions: NextAuthOptions = {
       return session;
     },
     async redirect({ url, baseUrl }) {
-      console.log('NextAuth redirect:', { url, baseUrl });
+      // If the URL is relative to our domain, use it
+      if (url.startsWith('/')) {
+        return `${baseUrl}${url}`;
+      }
       
-      // Always allow dashboard URLs
-      if (url.startsWith(baseUrl) && url.includes('/dashboard/')) {
-        console.log('Allowing dashboard redirect:', url);
+      // If it's our domain, use it
+      if (url.startsWith(baseUrl)) {
         return url;
       }
       
-      // Default to admin dashboard for any other case
-      const defaultUrl = `${baseUrl}/dashboard/admin`;
-      console.log('Using default redirect:', defaultUrl);
-      return defaultUrl;
+      // Default fallback
+      return baseUrl;
     }
   },
   pages: {
