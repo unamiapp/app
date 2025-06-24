@@ -18,9 +18,15 @@ export default function LoginPage() {
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
-  
   const [isClient, setIsClient] = useState(false);
   const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+  
+  const {
+    register,
+    handleSubmit,
+    setValue,
+    formState: { errors },
+  } = useForm<LoginFormData>();
 
   useEffect(() => {
     setIsClient(true);
@@ -79,13 +85,6 @@ export default function LoginPage() {
       </div>
     );
   }
-  
-  const {
-    register,
-    handleSubmit,
-    setValue,
-    formState: { errors },
-  } = useForm<LoginFormData>();
   
   // Set default role
   const setRole = (role: string) => {
