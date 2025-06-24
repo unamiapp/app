@@ -34,11 +34,30 @@ class FirebaseAdminSingleton {
         // Check if we have any existing apps
         if (!admin.apps.length) {
           // Use a service account directly for more reliable initialization
+          let privateKey = process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY;
+          
+          // Handle different private key formats
+          if (privateKey) {
+            // Replace escaped newlines
+            privateKey = privateKey.replace(/\\n/g, '\n');
+            
+            // Ensure proper PEM format
+            if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
+              console.error('Private key does not appear to be in PEM format');
+            }
+          }
+          
           const serviceAccount = {
             projectId: process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID,
             clientEmail: process.env.FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL,
-            privateKey: process.env.FIREBASE_SERVICE_ACCOUNT_PRIVATE_KEY?.replace(/\\n/g, '\n'),
+            privateKey: privateKey,
           };
+          
+          console.log('Service account config:', {
+            projectId: serviceAccount.projectId ? 'SET' : 'MISSING',
+            clientEmail: serviceAccount.clientEmail ? 'SET' : 'MISSING',
+            privateKey: serviceAccount.privateKey ? `SET (${serviceAccount.privateKey.length} chars)` : 'MISSING'
+          });
 
           // Initialize the app
           global._firebaseAdminApp = admin.initializeApp({
