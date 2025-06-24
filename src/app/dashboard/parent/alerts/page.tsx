@@ -6,6 +6,10 @@ import { useAuth } from '@/hooks/useAuth';
 import { toast } from 'react-hot-toast';
 import { ChildAlert } from '@/types/child';
 import Pagination from '@/components/ui/Pagination';
+import StatusBadge from '@/components/alerts/StatusBadge';
+import AlertTypeBadge from '@/components/alerts/AlertTypeBadge';
+import StatusBadge from '@/components/alerts/StatusBadge';
+import AlertTypeBadge from '@/components/alerts/AlertTypeBadge';
 
 export default function ParentAlertsPage() {
   const { userProfile } = useAuth();
@@ -104,64 +108,7 @@ export default function ParentAlertsPage() {
     setLoading(true);
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            Active
-          </span>
-        );
-      case 'resolved':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            Resolved
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            {status}
-          </span>
-        );
-    }
-  };
-  
-  const getAlertTypeBadge = (alertType: string | undefined) => {
-    const type = alertType || 'general';
-    switch (type.toLowerCase()) {
-      case 'missing':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-2">
-            Missing
-          </span>
-        );
-      case 'emergency':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-2">
-            Emergency
-          </span>
-        );
-      case 'medical':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2">
-            Medical
-          </span>
-        );
-      case 'school':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 ml-2">
-            School
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2">
-            {type.charAt(0).toUpperCase() + type.slice(1)}
-          </span>
-        );
-    }
-  };
+  // Using imported StatusBadge and AlertTypeBadge components instead
 
   if (loading) {
     return (
@@ -303,8 +250,8 @@ export default function ParentAlertsPage() {
                             {childData.firstName ? `${childData.firstName} ${childData.lastName}` : 'Child'}
                           </div>
                           <div className="flex items-center mt-1">
-                            {getStatusBadge(alert.status)}
-                            {getAlertTypeBadge(alert.alertType || alert.type)}
+                            <StatusBadge status={alert.status} />
+                            <AlertTypeBadge alertType={alert.alertType || alert.type} className="ml-2" />
                             <div className="ml-2 text-sm text-gray-500">
                               {alert.lastSeen?.location || alert.lastSeenLocation || 'Location not specified'}
                             </div>
