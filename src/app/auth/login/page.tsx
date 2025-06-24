@@ -19,11 +19,19 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
+  const [isClient, setIsClient] = useState(false);
+  const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+
+  useEffect(() => {
+    setIsClient(true);
+    if (typeof window !== 'undefined') {
+      const urlParams = new URLSearchParams(window.location.search);
+      setCallbackUrl(urlParams.get('callbackUrl'));
+    }
+  }, []);
+
   // Show message for authenticated users instead of redirecting
-  if (status === 'authenticated' && session?.user) {
-    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
-    const callbackUrl = urlParams.get('callbackUrl');
-    
+  if (status === 'authenticated' && session?.user && isClient) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -74,10 +82,6 @@ export default function LoginPage() {
   
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
-    
-    // Get the callback URL from the URL params or use default
-    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
-    const callbackUrl = urlParams.get('callbackUrl');
     
     let redirectTo;
     if (callbackUrl) {
