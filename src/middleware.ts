@@ -35,8 +35,8 @@ export async function middleware(request: NextRequest) {
     return NextResponse.redirect(url);
   }
 
-  // Get user role from token, default to 'admin' if not set
-  const userRole = ((token as any).role || 'admin').toLowerCase();
+  // Get user role from token, default to 'parent' if not set
+  const userRole = ((token as any).role || 'parent').toLowerCase();
   
   // If user is accessing a dashboard route
   if (pathname.startsWith('/dashboard/')) {

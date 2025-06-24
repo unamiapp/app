@@ -21,7 +21,7 @@ export default function LoginPage() {
   
   // Show message for authenticated users instead of redirecting
   if (status === 'authenticated' && session?.user) {
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const callbackUrl = urlParams.get('callbackUrl');
     
     return (
@@ -42,7 +42,7 @@ export default function LoginPage() {
               </a>
             ) : (
               <a
-                href={`/dashboard/${(session.user as any)?.role || 'admin'}`}
+                href={`/dashboard/${(session.user as any)?.role || 'parent'}`}
                 className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 Go to Dashboard
@@ -70,7 +70,7 @@ export default function LoginPage() {
     setIsLoading(true);
     
     // Get the callback URL from the URL params or use default
-    const urlParams = new URLSearchParams(window.location.search);
+    const urlParams = typeof window !== 'undefined' ? new URLSearchParams(window.location.search) : new URLSearchParams();
     const callbackUrl = urlParams.get('callbackUrl');
     
     let redirectTo;

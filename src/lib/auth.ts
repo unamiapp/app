@@ -135,7 +135,7 @@ export const authOptions: NextAuthOptions = {
       // Initial sign in
       if (user) {
         token.id = user.id;
-        token.role = (user as any).role || 'admin';
+        token.role = (user as any).role || 'parent';
         
         // Ensure roles is always an array that includes the primary role
         if ((user as any).roles && Array.isArray((user as any).roles)) {
@@ -156,7 +156,7 @@ export const authOptions: NextAuthOptions = {
       }
       
       // Always ensure token has role and roles properties
-      if (!token.role) token.role = 'admin';
+      if (!token.role) token.role = 'parent';
       if (!token.roles) token.roles = [token.role];
       
       return token;
