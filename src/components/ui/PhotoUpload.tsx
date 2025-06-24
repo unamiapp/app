@@ -118,7 +118,6 @@ export default function PhotoUpload({
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload photo');
-    } finally {
       setUploading(false);
       // Reset the file input
       if (fileInputRef.current) {
