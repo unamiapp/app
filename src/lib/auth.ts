@@ -96,8 +96,8 @@ export const authOptions: NextAuthOptions = {
             if (credentials.password === 'demo123') {
               console.log('Creating temporary user for demo:', credentials.email);
               
-              // Demo users always get parent role unless they're the admin email
-              const role = credentials.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'parent';
+              // Demo users get the role they selected, default to parent
+              const role = credentials.role || 'parent';
               return {
                 id: `temp-${credentials.email.replace('@', '-').replace('.', '-')}`,
                 email: credentials.email,
@@ -106,6 +106,9 @@ export const authOptions: NextAuthOptions = {
                 roles: [role],
               };
             }
+            
+            console.log('User not found in Firebase and password not demo123');
+            return null;
             
             return null;
           }
