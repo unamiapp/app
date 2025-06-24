@@ -4,9 +4,9 @@ import { adminDb } from '@/lib/firebase/admin';
 export async function GET(request: NextRequest) {
   try {
     const results = {
-      children: { count: 0, sample: [] as any[] },
-      users: { count: 0, sample: [] as any[] },
-      alerts: { count: 0, sample: [] as any[] }
+      children: { count: 0, sample: [] as any[], error?: string },
+      users: { count: 0, sample: [] as any[], error?: string },
+      alerts: { count: 0, sample: [] as any[], error?: string }
     };
 
     // Check children collection
