@@ -20,6 +20,7 @@ export default function LoginPage() {
   const [showPassword, setShowPassword] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
+  const [selectedRole, setSelectedRole] = useState<string>('parent');
   
   const {
     register,
@@ -86,10 +87,16 @@ export default function LoginPage() {
     );
   }
   
-  // Set default role
+  // Set role and update state
   const setRole = (role: string) => {
+    setSelectedRole(role);
     setValue('role', role);
   };
+  
+  // Initialize with parent role
+  useEffect(() => {
+    setValue('role', 'parent');
+  }, [setValue]);
   
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -98,22 +105,29 @@ export default function LoginPage() {
     if (callbackUrl) {
       redirectTo = decodeURIComponent(callbackUrl);
     } else {
-      redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/admin';
+      redirectTo = data.role ? `/dashboard/${data.role}` : '/dashboard/parent';
     }
     
     console.log('Attempting login with redirect to:', redirectTo);
+    
+    // Use selected role or form data role, default to parent
+    const userRole = selectedRole || data.role || 'parent';
+    
+    console.log('Login attempt - Email:', data.email, 'Role:', userRole);
     
     // Use NextAuth's built-in redirect functionality
     const result = await signIn('credentials', {
       email: data.email,
       password: data.password,
-      role: data.role || 'admin',
+      role: userRole,
       callbackUrl: redirectTo
     });
     
     // If we reach here, there was an error (successful login would have redirected)
-    console.error('Login failed:', result);
-    toast.error('Login failed. Please check your credentials.');
+    if (result?.error) {
+      console.error('Login failed:', result.error);
+      toast.error('Login failed. Please check your credentials.');
+    }
     setIsLoading(false);
   };
 
@@ -259,28 +273,44 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setRole('admin')}
-                className="w-full inline-flex justify-center py-2 px-4 border border-blue-200 rounded-md shadow-sm bg-blue-50 text-sm font-medium text-blue-700 hover:bg-blue-100"
+                className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                  selectedRole === 'admin' 
+                    ? 'border-blue-500 bg-blue-100 text-blue-800' 
+                    : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
+                }`}
               >
                 Admin
               </button>
               <button
                 type="button"
                 onClick={() => setRole('parent')}
-                className="w-full inline-flex justify-center py-2 px-4 border border-green-200 rounded-md shadow-sm bg-green-50 text-sm font-medium text-green-700 hover:bg-green-100"
+                className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                  selectedRole === 'parent' 
+                    ? 'border-green-500 bg-green-100 text-green-800' 
+                    : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
+                }`}
               >
                 Parent
               </button>
               <button
                 type="button"
                 onClick={() => setRole('school')}
-                className="w-full inline-flex justify-center py-2 px-4 border border-yellow-200 rounded-md shadow-sm bg-yellow-50 text-sm font-medium text-yellow-700 hover:bg-yellow-100"
+                className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                  selectedRole === 'school' 
+                    ? 'border-yellow-500 bg-yellow-100 text-yellow-800' 
+                    : 'border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
+                }`}
               >
                 School
               </button>
               <button
                 type="button"
                 onClick={() => setRole('authority')}
-                className="w-full inline-flex justify-center py-2 px-4 border border-red-200 rounded-md shadow-sm bg-red-50 text-sm font-medium text-red-700 hover:bg-red-100"
+                className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                  selectedRole === 'authority' 
+                    ? 'border-red-500 bg-red-100 text-red-800' 
+                    : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
+                }`}
               >
                 Authority
               </button>
@@ -295,7 +325,7 @@ export default function LoginPage() {
               </p>
             </div>
             <p className="mt-2 text-xs text-center text-gray-500">
-              Select your role before signing in
+              Selected role: <span className="font-semibold capitalize text-gray-700">{selectedRole}</span>
             </p>
           </div>
         </div>

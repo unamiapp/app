@@ -94,10 +94,13 @@ export const authOptions: NextAuthOptions = {
             
             // If user doesn't exist in Firebase, create a temporary user for demo purposes
             if (credentials.password === 'demo123') {
-              console.log('Creating temporary user for demo:', credentials.email);
+              console.log('Creating temporary user for demo:', credentials.email, 'with role:', credentials.role);
               
               // Demo users get the role they selected, default to parent
-              const role = credentials.role || 'parent';
+              // Only use passed role if it's explicitly provided, otherwise default to parent
+              const role = credentials.role && credentials.role !== 'admin' ? credentials.role : 'parent';
+              console.log('Assigned role for demo user:', role);
+              
               return {
                 id: `temp-${credentials.email.replace('@', '-').replace('.', '-')}`,
                 email: credentials.email,
