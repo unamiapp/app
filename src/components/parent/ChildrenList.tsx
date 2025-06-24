@@ -20,14 +20,31 @@ export default function ChildrenList() {
       try {
         setLoading(true);
         setError(null);
-        const response = await fetch(`/api/admin-sdk/children?page=${page}&limit=${itemsPerPage}`);
-        const data = await response.json();
-        if (data.success) {
-          setChildren(data.children || []);
-          setTotalPages(data.totalPages || 1);
+        
+        // First try the admin-sdk API
+        try {
+          const response = await fetch(`/api/admin-sdk/children?page=${page}&limit=${itemsPerPage}`);
+          const data = await response.json();
+          if (data.success) {
+            setChildren(data.children || []);
+            setTotalPages(data.totalPages || 1);
+            setCurrentPage(page);
+            return;
+          }
+        } catch (adminError) {
+          console.error('Admin SDK API failed, trying debug API:', adminError);
+        }
+        
+        // Fallback to debug API
+        const debugResponse = await fetch(`/api/debug/children?page=${page}&limit=${itemsPerPage}`);
+        const debugData = await debugResponse.json();
+        
+        if (debugData.success) {
+          setChildren(debugData.children || []);
+          setTotalPages(debugData.totalPages || 1);
           setCurrentPage(page);
         } else {
-          throw new Error(data.error || 'Failed to fetch children');
+          throw new Error(debugData.error || 'Failed to fetch children');
         }
       } catch (err) {
         console.error('Error fetching children:', err);
@@ -48,21 +65,41 @@ export default function ChildrenList() {
     }
     
     try {
-      const response = await fetch(`/api/admin-sdk/children?id=${childId}`, {
+      // First try the admin-sdk API
+      try {
+        const response = await fetch(`/api/admin-sdk/children?id=${childId}`, {
+          method: 'DELETE',
+        });
+        
+        if (response.ok) {
+          const result = await response.json();
+          
+          if (result.success) {
+            toast.success('Child profile removed successfully');
+            fetchChildren(currentPage); // Refresh the current page
+            return;
+          }
+        }
+      } catch (adminError) {
+        console.error('Admin SDK API failed, trying debug API:', adminError);
+      }
+      
+      // Fallback to debug API
+      const debugResponse = await fetch(`/api/debug/children?id=${childId}`, {
         method: 'DELETE',
       });
       
-      if (!response.ok) {
+      if (!debugResponse.ok) {
         throw new Error('Failed to delete child');
       }
       
-      const result = await response.json();
+      const debugResult = await debugResponse.json();
       
-      if (result.success) {
+      if (debugResult.success) {
         toast.success('Child profile removed successfully');
         fetchChildren(currentPage); // Refresh the current page
       } else {
-        throw new Error(result.message || 'Failed to delete child');
+        throw new Error(debugResult.message || 'Failed to delete child');
       }
     } catch (err) {
       console.error('Error deleting child:', err);
