@@ -47,47 +47,74 @@ export default function PhotoUpload({
       formData.append('path', path);
       formData.append('fileName', `${Date.now()}_${file.name}`);
 
-      // Upload using the debug API with progress tracking
-      const xhr = new XMLHttpRequest();
-      
-      const uploadPromise = new Promise<any>((resolve, reject) => {
-        xhr.open('POST', '/api/debug/upload', true);
+      // First try fetch API for simpler error handling
+      try {
+        const response = await fetch('/api/debug/upload', {
+          method: 'POST',
+          body: formData,
+        });
         
-        xhr.upload.onprogress = (event) => {
-          if (event.lengthComputable) {
-            const progress = Math.round((event.loaded / event.total) * 100);
-            setUploadProgress(progress);
+        if (response.ok) {
+          const data = await response.json();
+          if (data.success && data.url) {
+            setPhotoURL(data.url);
+            onPhotoChange(data.url);
+            toast.success('Photo uploaded successfully');
+            return;
           }
-        };
+        }
         
-        xhr.onload = () => {
-          if (xhr.status >= 200 && xhr.status < 300) {
-            try {
-              const response = JSON.parse(xhr.responseText);
-              resolve(response);
-            } catch (e) {
-              reject(new Error('Invalid response format'));
+        // If fetch fails, fall back to XHR for progress tracking
+        throw new Error('Fetch upload failed, trying XHR');
+      } catch (fetchError) {
+        console.log('Falling back to XHR upload:', fetchError);
+        
+        // Upload using XHR with progress tracking
+        const xhr = new XMLHttpRequest();
+        
+        const uploadPromise = new Promise<any>((resolve, reject) => {
+          xhr.open('POST', '/api/debug/upload', true);
+          
+          xhr.upload.onprogress = (event) => {
+            if (event.lengthComputable) {
+              const progress = Math.round((event.loaded / event.total) * 100);
+              setUploadProgress(progress);
             }
-          } else {
-            reject(new Error(`HTTP Error: ${xhr.status}`));
-          }
-        };
+          };
+          
+          xhr.onload = () => {
+            if (xhr.status >= 200 && xhr.status < 300) {
+              try {
+                const response = JSON.parse(xhr.responseText);
+                resolve(response);
+              } catch (e) {
+                reject(new Error('Invalid response format'));
+              }
+            } else {
+              reject(new Error(`HTTP Error: ${xhr.status}`));
+            }
+          };
+          
+          xhr.onerror = () => reject(new Error('Network error'));
+          xhr.send(formData);
+        });
         
-        xhr.onerror = () => reject(new Error('Network error'));
-        xhr.send(formData);
-      });
-      
-      const data = await uploadPromise;
-
-      // Data is already parsed from the XHR response
-      
-      if (data.success && data.url) {
-        setPhotoURL(data.url);
-        onPhotoChange(data.url);
-        toast.success('Photo uploaded successfully');
-      } else {
-        throw new Error('Failed to get photo URL');
+        const data = await uploadPromise;
+        
+        if (data.success && data.url) {
+          setPhotoURL(data.url);
+          onPhotoChange(data.url);
+          
+          if (data.fallback) {
+            toast.success('Photo uploaded with fallback mechanism');
+          } else {
+            toast.success('Photo uploaded successfully');
+          }
+        } else {
+          throw new Error('Failed to get photo URL');
+        }
       }
+    }
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload photo');

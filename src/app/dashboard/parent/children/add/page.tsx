@@ -45,14 +45,19 @@ export default function AddChildPage() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
+    
+    // Prevent double submission
+    if (isSubmitting || loading) {
+      return;
+    }
+    
     setIsSubmitting(true);
+    setLoading(true);
     
     try {
       if (!userProfile) {
         throw new Error('User not authenticated');
       }
-      
-      // photoURL is already set by the PhotoUpload component
       
       // Create child profile data
       const childData = {
@@ -60,8 +65,9 @@ export default function AddChildPage() {
         lastName: formData.lastName,
         dateOfBirth: formData.dateOfBirth,
         gender: formData.gender as 'male' | 'female' | 'other',
-        photoURL: photoURL,
+        photoURL: photoURL || '', // Use empty string if no photo
         guardians: [userProfile.id], // Explicitly set guardians array with current user ID
+        parentId: userProfile.id, // Also set parentId for new data model
         identificationNumber: formData.identificationNumber || '',
         schoolName: formData.schoolName || '',
         address: {
@@ -76,26 +82,20 @@ export default function AddChildPage() {
           conditions: formData.conditions ? formData.conditions.split(',').map(item => item.trim()) : [],
           medications: formData.medications ? formData.medications.split(',').map(item => item.trim()) : [],
           emergencyContact: {
-            name: formData.emergencyContactName,
-            relationship: formData.emergencyContactRelationship,
-            phone: formData.emergencyContactPhone,
+            name: formData.emergencyContactName || '',
+            relationship: formData.emergencyContactRelationship || '',
+            phone: formData.emergencyContactPhone || '',
           },
         },
       };
       
-      // Create the child profile using admin-sdk API
-      setLoading(true);
-      const response = await fetch('/api/admin-sdk/children', {
-        method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify(childData),
-      });
+      console.log('Creating child profile with data:', { ...childData, photoURL: photoURL ? 'Set' : 'Not set' });
       
-      if (!response.ok) {
-        // Fallback to debug API if admin-sdk API fails
-        console.log('Admin SDK API failed, trying debug API');
+      // Try debug API first as it's more reliable
+      let success = false;
+      
+      try {
+        console.log('Trying debug API first');
         const debugResponse = await fetch('/api/debug/children', {
           method: 'POST',
           headers: {
@@ -104,18 +104,14 @@ export default function AddChildPage() {
           body: JSON.stringify(childData),
         });
         
-        if (!debugResponse.ok) {
-          const errorData = await debugResponse.json();
-          throw new Error(errorData.error || 'Failed to create child profile');
-        }
-        
         const debugResult = await debugResponse.json();
         
         if (debugResult.success) {
-          // Show success notification
+          success = true;
+          console.log('Debug API success:', debugResult);
           toast.success('Child profile created successfully!');
           
-          // Log activity for recent activities
+          // Log activity
           try {
             await fetch('/api/debug/activities', {
               method: 'POST',
@@ -130,46 +126,65 @@ export default function AddChildPage() {
           } catch (activityError) {
             console.error('Failed to log activity:', activityError);
           }
-          
-          // Navigate to children page
-          router.push('/dashboard/parent/children');
         } else {
+          console.log('Debug API failed:', debugResult);
           throw new Error(debugResult.message || 'Failed to create child profile');
         }
-      } else {
-        const result = await response.json();
+      } catch (debugError) {
+        console.error('Debug API error:', debugError);
         
-        if (result.success) {
-          // Show success notification
-          toast.success('Child profile created successfully!');
+        // Fallback to admin-sdk API
+        try {
+          console.log('Falling back to admin-sdk API');
+          const response = await fetch('/api/admin-sdk/children', {
+            method: 'POST',
+            headers: {
+              'Content-Type': 'application/json',
+            },
+            body: JSON.stringify(childData),
+          });
           
-          // Log activity for recent activities
-          try {
-            await fetch('/api/debug/activities', {
-              method: 'POST',
-              headers: { 'Content-Type': 'application/json' },
-              body: JSON.stringify({
-                type: 'profile',
-                title: 'Child Profile Created',
-                description: `Created profile for ${formData.firstName} ${formData.lastName}`,
-                status: 'success'
-              })
-            });
-          } catch (activityError) {
-            console.error('Failed to log activity:', activityError);
+          const result = await response.json();
+          
+          if (result.success) {
+            success = true;
+            console.log('Admin SDK API success:', result);
+            toast.success('Child profile created successfully!');
+            
+            // Log activity
+            try {
+              await fetch('/api/debug/activities', {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                body: JSON.stringify({
+                  type: 'profile',
+                  title: 'Child Profile Created',
+                  description: `Created profile for ${formData.firstName} ${formData.lastName}`,
+                  status: 'success'
+                })
+              });
+            } catch (activityError) {
+              console.error('Failed to log activity:', activityError);
+            }
+          } else {
+            throw new Error(result.message || 'Failed to create child profile');
           }
-          
-          // Navigate to children page
-          router.push('/dashboard/parent/children');
-        } else {
-          throw new Error(result.message || 'Failed to create child profile');
+        } catch (adminError) {
+          console.error('Admin SDK API error:', adminError);
+          throw adminError;
         }
+      }
+      
+      if (success) {
+        // Navigate to children page only if successful
+        router.push('/dashboard/parent/children');
       }
     } catch (error) {
       console.error('Error creating child profile:', error);
       toast.error('Failed to create child profile. Please try again.');
     } finally {
       setIsSubmitting(false);
+      setLoading(false);
     }
   };
 

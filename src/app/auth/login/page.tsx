@@ -317,7 +317,6 @@ export default function LoginPage() {
                 <strong>Demo Credentials:</strong>
               </p>
               <p className="text-xs text-gray-600">
-                Admin: info@unamifoundation.org / Proof321#<br/>
                 Demo: any-email@example.com / demo123
               </p>
               <p className="text-xs text-gray-600 mt-2 font-semibold text-blue-600">
