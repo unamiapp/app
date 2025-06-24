@@ -60,9 +60,43 @@ export const authOptions: NextAuthOptions = {
             }
           }
           
-          // For all users (including admin), try to authenticate with Firebase
+          // First, check if user exists in Firestore users collection
           try {
-            // Get user from Firebase
+            const usersSnapshot = await adminDb.collection('users')
+              .where('email', '==', credentials.email.toLowerCase())
+              .limit(1)
+              .get();
+            
+            if (!usersSnapshot.empty) {
+              const userDoc = usersSnapshot.docs[0];
+              const userData = userDoc.data();
+              
+              console.log('Found user in Firestore:', userData.email, 'Role:', userData.role);
+              
+              // For registered users, use demo password temporarily
+              // In production, these users should have Firebase Auth accounts
+              if (credentials.password === 'demo123') {
+                const role = credentials.role || userData.role || 'parent';
+                
+                return {
+                  id: userDoc.id,
+                  email: userData.email,
+                  name: userData.displayName || userData.firstName + ' ' + userData.lastName || userData.email.split('@')[0],
+                  role: role as UserRole,
+                  roles: [role],
+                };
+              } else {
+                console.log('Incorrect password for Firestore user');
+                return null;
+              }
+            }
+          } catch (firestoreError) {
+            console.error('Firestore user lookup error:', firestoreError);
+          }
+          
+          // If not found in Firestore, try Firebase Auth
+          try {
+            // Get user from Firebase Auth
             const userRecord = await adminAuth.getUserByEmail(credentials.email);
             
             // Get user claims to check roles
@@ -90,7 +124,7 @@ export const authOptions: NextAuthOptions = {
               roles: customClaims.roles || [role],
             };
           } catch (firebaseError) {
-            console.error('Firebase authentication error:', firebaseError);
+            console.error('Firebase Auth error:', firebaseError);
             
             // If user doesn't exist in Firebase, create a temporary user for demo purposes
             if (credentials.password === 'demo123') {
