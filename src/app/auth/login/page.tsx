@@ -19,19 +19,40 @@ export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false);
   const [showPassword, setShowPassword] = useState(false);
   
-  // Only redirect if user is authenticated and not loading
-  useEffect(() => {
-    if (status === 'authenticated' && session?.user) {
-      const urlParams = new URLSearchParams(window.location.search);
-      const callbackUrl = urlParams.get('callbackUrl');
-      
-      if (callbackUrl) {
-        const redirectTo = decodeURIComponent(callbackUrl);
-        console.log('User already authenticated, redirecting to callback:', redirectTo);
-        window.location.replace(redirectTo);
-      }
-    }
-  }, [session, status]);
+  // Show message for authenticated users instead of redirecting
+  if (status === 'authenticated' && session?.user) {
+    const urlParams = new URLSearchParams(window.location.search);
+    const callbackUrl = urlParams.get('callbackUrl');
+    
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+          <h1 className="text-3xl font-bold text-blue-700">UNCIP</h1>
+          <h2 className="mt-2 text-2xl font-bold text-gray-800">Already Signed In</h2>
+          <p className="mt-2 text-sm text-gray-500">
+            You are already authenticated as {session.user.email}
+          </p>
+          <div className="mt-6">
+            {callbackUrl ? (
+              <a
+                href={decodeURIComponent(callbackUrl)}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Continue to Dashboard
+              </a>
+            ) : (
+              <a
+                href={`/dashboard/${(session.user as any)?.role || 'admin'}`}
+                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+              >
+                Go to Dashboard
+              </a>
+            )}
+          </div>
+        </div>
+      </div>
+    );
+  }
   
   const {
     register,

@@ -50,10 +50,13 @@ export const authOptions: NextAuthOptions = {
               return {
                 id: 'admin-user',
                 email: ADMIN_EMAIL,
-                name: 'Admin User',
+                name: 'UNCIP Admin',
                 role: credentials.role || 'admin',
                 roles: ['admin', credentials.role || 'admin'].filter((v, i, a) => a.indexOf(v) === i),
               };
+            } else {
+              console.log('Admin login failed - incorrect password');
+              return null;
             }
           }
           
@@ -90,8 +93,7 @@ export const authOptions: NextAuthOptions = {
             console.error('Firebase authentication error:', firebaseError);
             
             // If user doesn't exist in Firebase, create a temporary user for demo purposes
-            // This should be removed in production and users should be properly registered
-            if (credentials.password === 'demo123' || credentials.password === 'Proof321#') {
+            if (credentials.password === 'demo123') {
               console.log('Creating temporary user for demo:', credentials.email);
               
               const role = credentials.role || 'parent';
