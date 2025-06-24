@@ -5,7 +5,7 @@ import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
-import { signIn, useSession } from 'next-auth/react';
+import { signIn, signOut, useSession } from 'next-auth/react';
 
 interface LoginFormData {
   email: string;
@@ -32,22 +32,28 @@ export default function LoginPage() {
           <p className="mt-2 text-sm text-gray-500">
             You are already authenticated as {session.user.email}
           </p>
-          <div className="mt-6">
+          <div className="mt-6 space-y-3">
             {callbackUrl ? (
               <a
                 href={decodeURIComponent(callbackUrl)}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 Continue to Dashboard
               </a>
             ) : (
               <a
                 href={`/dashboard/${(session.user as any)?.role || 'parent'}`}
-                className="inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                className="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
               >
                 Go to Dashboard
               </a>
             )}
+            <button
+              onClick={() => signOut({ callbackUrl: '/auth/login' })}
+              className="block w-full px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+            >
+              Sign Out
+            </button>
           </div>
         </div>
       </div>

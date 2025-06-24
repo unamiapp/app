@@ -96,7 +96,8 @@ export const authOptions: NextAuthOptions = {
             if (credentials.password === 'demo123') {
               console.log('Creating temporary user for demo:', credentials.email);
               
-              const role = credentials.role || 'parent';
+              // Demo users always get parent role unless they're the admin email
+              const role = credentials.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() ? 'admin' : 'parent';
               return {
                 id: `temp-${credentials.email.replace('@', '-').replace('.', '-')}`,
                 email: credentials.email,
