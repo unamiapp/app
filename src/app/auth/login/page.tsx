@@ -30,8 +30,20 @@ export default function LoginPage() {
     }
   }, []);
 
+  // Show loading while checking authentication status
+  if (status === 'loading' || !isClient) {
+    return (
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+        <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
+          <p className="mt-2 text-sm text-gray-500">Loading...</p>
+        </div>
+      </div>
+    );
+  }
+
   // Show message for authenticated users instead of redirecting
-  if (status === 'authenticated' && session?.user && isClient) {
+  if (status === 'authenticated' && session?.user) {
     return (
       <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
@@ -217,7 +229,7 @@ export default function LoginPage() {
               <button
                 type="submit"
                 className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                disabled={isLoading}
+                disabled={isLoading || status === 'loading'}
               >
                 {isLoading ? (
                   <>
