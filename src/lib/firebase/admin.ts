@@ -5,11 +5,11 @@
  * All API routes should import from this file to ensure consistent access to Firebase services.
  */
 
-// Import from the minimal implementation
-import { adminAuth, adminDb, adminStorage } from './admin-minimal';
+// Import from the singleton implementation
+import { adminAuth, adminDb, adminStorage, isFirebaseAdminInitialized } from './admin-singleton';
+
+// Log the initialization status
+console.log(`Firebase Admin SDK initialized: ${isFirebaseAdminInitialized()}`);
 
 // Export admin services
 export { adminAuth, adminDb, adminStorage };
-
-// For backward compatibility
-export const isFirebaseAdminInitialized = () => true;
