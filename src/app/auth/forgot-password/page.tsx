@@ -24,9 +24,31 @@ export default function ForgotPasswordPage() {
   const onSubmit = async (data: ForgotPasswordFormData) => {
     setIsLoading(true);
     try {
-      await resetPassword(data.email);
-      setIsSubmitted(true);
-      toast.success('Password reset email sent. Check your inbox.');
+      // First try our server API endpoint that handles both Firebase Auth and Firestore users
+      const response = await fetch('/api/auth/reset-password', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ email: data.email }),
+      });
+      
+      const result = await response.json();
+      
+      if (result.success) {
+        setIsSubmitted(true);
+        toast.success('Password reset email sent. Check your inbox.');
+        
+        // If user was migrated, show additional message
+        if (result.userType === 'migrated') {
+          toast.success('Your account has been upgraded to support password reset.');
+        }
+      } else {
+        // Fallback to client-side Firebase Auth
+        await resetPassword(data.email);
+        setIsSubmitted(true);
+        toast.success('Password reset email sent. Check your inbox.');
+      }
     } catch (error: any) {
       console.error('Password reset error:', error);
       toast.error(error.message || 'Failed to send password reset email.');
