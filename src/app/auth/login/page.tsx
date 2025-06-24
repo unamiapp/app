@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import Link from 'next/link';
 import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
@@ -88,15 +88,15 @@ export default function LoginPage() {
   }
   
   // Set role and update state
-  const setRole = (role: string) => {
+  const setRole = useCallback((role: string) => {
     setSelectedRole(role);
     setValue('role', role);
-  };
+  }, [setValue]);
   
   // Initialize with parent role
   useEffect(() => {
     setValue('role', 'parent');
-  }, [setValue]);
+  }, []);
   
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
