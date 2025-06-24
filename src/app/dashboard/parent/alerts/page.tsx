@@ -17,6 +17,9 @@ export default function ParentAlertsPage() {
   const [totalAlerts, setTotalAlerts] = useState(0);
   const itemsPerPage = 5;
 
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
+  
   useEffect(() => {
     const fetchAlerts = async () => {
       try {
@@ -26,7 +29,20 @@ export default function ParentAlertsPage() {
           throw new Error('Failed to fetch alerts');
         }
         const data = await response.json();
-        const allAlerts = data.alerts || [];
+        let allAlerts = data.alerts || [];
+        
+        // Apply status filter client-side if needed
+        if (statusFilter) {
+          allAlerts = allAlerts.filter((alert: any) => alert.status === statusFilter);
+        }
+        
+        // Apply type filter client-side if needed
+        if (typeFilter) {
+          allAlerts = allAlerts.filter((alert: any) => 
+            (alert.alertType && alert.alertType.toLowerCase() === typeFilter.toLowerCase()) || 
+            (alert.type && alert.type.toLowerCase() === typeFilter.toLowerCase())
+          );
+        }
         
         // Calculate pagination
         const total = allAlerts.length;
@@ -69,8 +85,20 @@ export default function ParentAlertsPage() {
     };
 
     fetchAlerts();
-  }, [currentPage, itemsPerPage]);
+  }, [currentPage, itemsPerPage, statusFilter, typeFilter]);
 
+  const handleStatusFilterChange = (filter: string | null) => {
+    setStatusFilter(filter);
+    setCurrentPage(1); // Reset to first page when filter changes
+    setLoading(true);
+  };
+  
+  const handleTypeFilterChange = (filter: string | null) => {
+    setTypeFilter(filter);
+    setCurrentPage(1); // Reset to first page when filter changes
+    setLoading(true);
+  };
+  
   const handlePageChange = (page: number) => {
     setCurrentPage(page);
     setLoading(true);
@@ -94,6 +122,42 @@ export default function ParentAlertsPage() {
         return (
           <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
             {status}
+          </span>
+        );
+    }
+  };
+  
+  const getAlertTypeBadge = (alertType: string | undefined) => {
+    const type = alertType || 'general';
+    switch (type.toLowerCase()) {
+      case 'missing':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-yellow-100 text-yellow-800 ml-2">
+            Missing
+          </span>
+        );
+      case 'emergency':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800 ml-2">
+            Emergency
+          </span>
+        );
+      case 'medical':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-blue-100 text-blue-800 ml-2">
+            Medical
+          </span>
+        );
+      case 'school':
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 ml-2">
+            School
+          </span>
+        );
+      default:
+        return (
+          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800 ml-2">
+            {type.charAt(0).toUpperCase() + type.slice(1)}
           </span>
         );
     }
@@ -126,14 +190,89 @@ export default function ParentAlertsPage() {
         </div>
       </div>
 
-      <div className="mt-8">
+      <div className="mt-6">
+        {/* Status filters */}
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Status:</h3>
+          <div className="inline-flex rounded-md shadow-sm mb-4">
+            <button
+              type="button"
+              onClick={() => handleStatusFilterChange(null)}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-l-md ${!statusFilter ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              All Statuses
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStatusFilterChange('active')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${statusFilter === 'active' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              Active
+            </button>
+            <button
+              type="button"
+              onClick={() => handleStatusFilterChange('resolved')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md ${statusFilter === 'resolved' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              Resolved
+            </button>
+          </div>
+        </div>
+        
+        {/* Type filters */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Type:</h3>
+          <div className="inline-flex rounded-md shadow-sm mb-6">
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange(null)}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-l-md ${!typeFilter ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              All Types
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange('missing')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${typeFilter === 'missing' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              Missing
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange('emergency')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${typeFilter === 'emergency' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              Emergency
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange('medical')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${typeFilter === 'medical' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              Medical
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange('school')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md ${typeFilter === 'school' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              School
+            </button>
+          </div>
+        </div>
+      
+        <div className="mt-8">
         {alerts.length === 0 ? (
           <div className="bg-white shadow overflow-hidden sm:rounded-md p-6 text-center">
             <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No active alerts</h3>
-            <p className="mt-1 text-sm text-gray-500">You don't have any active alerts at the moment.</p>
+            <p className="mt-1 text-sm text-gray-500">
+              {statusFilter || typeFilter ? 
+                `No alerts found matching the selected filters.` : 
+                'You don't have any active alerts at the moment.'}
+            </p>
           </div>
         ) : (
           <div className="bg-white shadow overflow-hidden sm:rounded-md">
@@ -165,8 +304,9 @@ export default function ParentAlertsPage() {
                           </div>
                           <div className="flex items-center mt-1">
                             {getStatusBadge(alert.status)}
+                            {getAlertTypeBadge(alert.alertType || alert.type)}
                             <div className="ml-2 text-sm text-gray-500">
-                              {alert.lastSeen?.location || 'Location not specified'}
+                              {alert.lastSeen?.location || alert.lastSeenLocation || 'Location not specified'}
                             </div>
                           </div>
                         </div>
