@@ -41,6 +41,11 @@ class FirebaseAdminSingleton {
             // Replace escaped newlines
             privateKey = privateKey.replace(/\\n/g, '\n');
             
+            // Remove quotes if present
+            if (privateKey.startsWith('"') && privateKey.endsWith('"')) {
+              privateKey = privateKey.substring(1, privateKey.length - 1);
+            }
+            
             // Ensure proper PEM format
             if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
               console.error('Private key does not appear to be in PEM format');
@@ -50,12 +55,19 @@ class FirebaseAdminSingleton {
                 console.log('Attempted to fix private key format');
               }
             }
+            
+            console.log('Private key format check:', {
+              startsWithHeader: privateKey.includes('-----BEGIN PRIVATE KEY-----'),
+              endsWithFooter: privateKey.includes('-----END PRIVATE KEY-----'),
+              length: privateKey.length
+            });
           }
           
           const serviceAccount = {
             projectId: process.env.FIREBASE_SERVICE_ACCOUNT_PROJECT_ID,
             clientEmail: process.env.FIREBASE_SERVICE_ACCOUNT_CLIENT_EMAIL,
             privateKey: privateKey,
+            private_key: privateKey, // Add alternative key name for compatibility
           };
           
           console.log('Service account config:', {
