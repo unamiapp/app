@@ -44,6 +44,11 @@ class FirebaseAdminSingleton {
             // Ensure proper PEM format
             if (!privateKey.includes('-----BEGIN PRIVATE KEY-----')) {
               console.error('Private key does not appear to be in PEM format');
+              // Try to fix common issues with private key format
+              if (!privateKey.startsWith('-----')) {
+                privateKey = `-----BEGIN PRIVATE KEY-----\n${privateKey}\n-----END PRIVATE KEY-----`;
+                console.log('Attempted to fix private key format');
+              }
             }
           }
           

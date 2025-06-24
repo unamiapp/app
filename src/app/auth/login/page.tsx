@@ -314,14 +314,19 @@ export default function LoginPage() {
             </div>
             <div className="mt-4 p-3 bg-gray-50 rounded-md">
               <p className="text-xs text-gray-600 mb-2">
-                <strong>Demo Credentials:</strong>
+                <strong>Login Instructions:</strong>
               </p>
               <p className="text-xs text-gray-600">
-                Demo: any-email@example.com / demo123
+                <span className="font-semibold">New Users:</span> any-email@example.com / demo123
               </p>
               <p className="text-xs text-gray-600 mt-2 font-semibold text-blue-600">
-                Registered users: Use your email with password "demo123" to access your data
+                <span className="font-semibold">Registered Users:</span> Use your email with password "demo123"
               </p>
+              <div className="mt-2 text-xs text-gray-600">
+                <Link href="/auth/forgot-password" className="text-blue-600 hover:text-blue-800 font-medium">
+                  Forgot your password? Click here to reset it
+                </Link>
+              </div>
             </div>
             <p className="mt-2 text-xs text-center text-gray-500">
               Selected role: <span className="font-semibold capitalize text-gray-700">{selectedRole}</span>

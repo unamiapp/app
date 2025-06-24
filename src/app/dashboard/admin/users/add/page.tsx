@@ -5,6 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useUsers } from '@/hooks/useAdminSdk';
 import { UserRole } from '@/types/user';
 import { toast } from 'react-hot-toast';
+import PhotoUpload from '@/components/ui/PhotoUpload';
 
 export default function AddUserPage() {
   const router = useRouter();
@@ -21,6 +22,8 @@ export default function AddUserPage() {
     organizationName: '',
     organizationType: 'school',
   });
+  
+  const [photoURL, setPhotoURL] = useState('');
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target;
@@ -51,6 +54,7 @@ export default function AddUserPage() {
         phoneNumber: formData.phoneNumber || undefined,
         address: formData.address || undefined,
         organization: organization,
+        photoURL: photoURL || undefined,
       };
       
       await createUser(userData);
@@ -173,6 +177,17 @@ export default function AddUserPage() {
                       className="shadow-sm focus:ring-blue-500 focus:border-blue-500 block w-full sm:text-sm border-gray-300 rounded-md"
                     />
                   </div>
+                </div>
+                
+                <div className="sm:col-span-3">
+                  <label className="block text-sm font-medium text-gray-700 mb-1">
+                    Profile Photo (optional)
+                  </label>
+                  <PhotoUpload
+                    onPhotoChange={setPhotoURL}
+                    path="profile-photos"
+                    className="h-24 w-24"
+                  />
                 </div>
 
                 <div className="sm:col-span-6">
