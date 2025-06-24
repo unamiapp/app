@@ -25,9 +25,12 @@ export default function LoginPage() {
   const {
     register,
     handleSubmit,
-    setValue,
     formState: { errors },
-  } = useForm<LoginFormData>();
+  } = useForm<LoginFormData>({
+    defaultValues: {
+      role: 'parent'
+    }
+  });
 
   useEffect(() => {
     setIsClient(true);
@@ -90,14 +93,7 @@ export default function LoginPage() {
   // Set role and update state
   const setRole = (role: string) => {
     setSelectedRole(role);
-    setValue('role', role);
   };
-  
-  // Initialize with parent role on mount
-  useEffect(() => {
-    setValue('role', 'parent');
-    setSelectedRole('parent');
-  }, []);
   
   const onSubmit = async (data: LoginFormData) => {
     setIsLoading(true);
@@ -225,7 +221,7 @@ export default function LoginPage() {
             </div>
 
             {/* Hidden role field */}
-            <input type="hidden" {...register('role')} />
+            <input type="hidden" value={selectedRole} {...register('role')} />
 
             <div className="flex items-center">
               <input
