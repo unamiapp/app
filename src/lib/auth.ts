@@ -46,13 +46,13 @@ export const authOptions: NextAuthOptions = {
             if (credentials.password === 'Proof321#') {
               console.log('Admin login successful with role:', credentials.role || 'admin');
               
-              // Create admin user with specified role
+              // Create admin user with admin role by default
               return {
                 id: 'admin-user',
                 email: ADMIN_EMAIL,
                 name: 'UNCIP Admin',
-                role: credentials.role || 'admin',
-                roles: ['admin', credentials.role || 'admin'].filter((v, i, a) => a.indexOf(v) === i),
+                role: 'admin', // Always default to admin role
+                roles: ['admin'],
               };
             } else {
               console.log('Admin login failed - incorrect password');
@@ -83,7 +83,13 @@ export const authOptions: NextAuthOptions = {
               });
               
               if ((userData.password && credentials.password === userData.password) || credentials.password === 'demo123') {
-                const role = credentials.role || userData.role || 'parent';
+                // If user is admin, always use admin role
+                let role = userData.role || 'parent';
+                if (userData.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || 
+                    userData.role === 'admin' || 
+                    (userData.roles && userData.roles.includes('admin'))) {
+                  role = 'admin';
+                }
                 
                 return {
                   id: userDoc.id,
@@ -112,11 +118,12 @@ export const authOptions: NextAuthOptions = {
             // Determine role based on passed role or user's assigned role
             let role = credentials.role || customClaims.role || 'parent';
             
-            // For admin users, allow role switching
+            // For admin users, always use admin role
             if (credentials.email.toLowerCase() === ADMIN_EMAIL.toLowerCase() || 
                 customClaims.role === 'admin' || 
                 (customClaims.roles && customClaims.roles.includes('admin'))) {
-              console.log('Admin user switching to role:', role);
+              role = 'admin';
+              console.log('Admin user using admin role');
             } else {
               // For non-admin users, enforce their assigned role
               role = customClaims.role || 'parent';
@@ -137,9 +144,13 @@ export const authOptions: NextAuthOptions = {
             if (credentials.password === 'demo123') {
               console.log('Creating temporary user for demo:', credentials.email, 'with role:', credentials.role);
               
-              // Demo users get the role they selected, default to parent
-              // Only use passed role if it's explicitly provided, otherwise default to parent
-              const role = credentials.role && credentials.role !== 'admin' ? credentials.role : 'parent';
+              // Demo users get the role they selected, but admin email always gets admin role
+              let role = 'parent';
+              if (credentials.email.toLowerCase() === ADMIN_EMAIL.toLowerCase()) {
+                role = 'admin';
+              } else if (credentials.role && credentials.role !== 'admin') {
+                role = credentials.role;
+              }
               console.log('Assigned role for demo user:', role);
               
               return {
@@ -202,7 +213,12 @@ export const authOptions: NextAuthOptions = {
       }
       
       // Always ensure token has role and roles properties
-      if (!token.role) token.role = 'parent';
+      // If user is admin email, always use admin role
+      if (token.email === ADMIN_EMAIL) {
+        token.role = 'admin';
+      } else if (!token.role) {
+        token.role = 'parent';
+      }
       if (!token.roles) token.roles = [token.role];
       
       return token;
