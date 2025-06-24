@@ -73,9 +73,9 @@ export const authOptions: NextAuthOptions = {
               
               console.log('Found user in Firestore:', userData.email, 'Role:', userData.role);
               
-              // For registered users, use demo password temporarily
-              // In production, these users should have Firebase Auth accounts
-              if (credentials.password === 'demo123') {
+              // For registered users, check if they have a password in Firestore
+              // Try their stored password or fallback to demo123
+              if (userData.password && credentials.password === userData.password || credentials.password === 'demo123') {
                 const role = credentials.role || userData.role || 'parent';
                 
                 return {
