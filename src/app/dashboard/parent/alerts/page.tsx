@@ -8,8 +8,6 @@ import { ChildAlert } from '@/types/child';
 import Pagination from '@/components/ui/Pagination';
 import StatusBadge from '@/components/alerts/StatusBadge';
 import AlertTypeBadge from '@/components/alerts/AlertTypeBadge';
-import StatusBadge from '@/components/alerts/StatusBadge';
-import AlertTypeBadge from '@/components/alerts/AlertTypeBadge';
 
 export default function ParentAlertsPage() {
   const { userProfile } = useAuth();
@@ -107,8 +105,6 @@ export default function ParentAlertsPage() {
     setCurrentPage(page);
     setLoading(true);
   };
-
-  // Using imported StatusBadge and AlertTypeBadge components instead
 
   if (loading) {
     return (
@@ -209,81 +205,82 @@ export default function ParentAlertsPage() {
         </div>
       
         <div className="mt-8">
-        {alerts.length === 0 ? (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md p-6 text-center">
-            <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
-            </svg>
-            <h3 className="mt-2 text-sm font-medium text-gray-900">No active alerts</h3>
-            <p className="mt-1 text-sm text-gray-500">
-              {statusFilter || typeFilter ? 
-                `No alerts found matching the selected filters.` : 
-                'You don't have any active alerts at the moment.'}
-            </p>
-          </div>
-        ) : (
-          <div className="bg-white shadow overflow-hidden sm:rounded-md">
-            <ul className="divide-y divide-gray-200">
-              {alerts.map((alert) => {
-                const childData = childrenData[alert.childId] || {};
-                return (
-                  <li key={alert.id} className="px-6 py-4">
-                    <div className="flex items-center justify-between">
-                      <div className="flex items-center">
-                        <div className="flex-shrink-0 h-12 w-12 rounded-full overflow-hidden bg-gray-100">
-                          {childData.photoURL ? (
-                            <img
-                              src={childData.photoURL}
-                              alt={`${childData.firstName} ${childData.lastName}`}
-                              className="h-full w-full object-cover"
-                            />
-                          ) : (
-                            <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
-                              <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
-                              </svg>
+          {alerts.length === 0 ? (
+            <div className="bg-white shadow overflow-hidden sm:rounded-md p-6 text-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              <h3 className="mt-2 text-sm font-medium text-gray-900">No active alerts</h3>
+              <p className="mt-1 text-sm text-gray-500">
+                {statusFilter || typeFilter ? 
+                  "No alerts found matching the selected filters." : 
+                  "You don't have any active alerts at the moment."}
+              </p>
+            </div>
+          ) : (
+            <div className="bg-white shadow overflow-hidden sm:rounded-md">
+              <ul className="divide-y divide-gray-200">
+                {alerts.map((alert) => {
+                  const childData = childrenData[alert.childId] || {};
+                  return (
+                    <li key={alert.id} className="px-6 py-4">
+                      <div className="flex items-center justify-between">
+                        <div className="flex items-center">
+                          <div className="flex-shrink-0 h-12 w-12 rounded-full overflow-hidden bg-gray-100">
+                            {childData.photoURL ? (
+                              <img
+                                src={childData.photoURL}
+                                alt={`${childData.firstName} ${childData.lastName}`}
+                                className="h-full w-full object-cover"
+                              />
+                            ) : (
+                              <div className="h-full w-full flex items-center justify-center bg-gray-200 text-gray-500">
+                                <svg xmlns="http://www.w3.org/2000/svg" className="h-6 w-6" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                              </div>
+                            )}
+                          </div>
+                          <div className="ml-4">
+                            <div className="text-sm font-medium text-gray-900">
+                              {childData.firstName ? `${childData.firstName} ${childData.lastName}` : 'Child'}
                             </div>
-                          )}
+                            <div className="flex items-center mt-1">
+                              <StatusBadge status={alert.status} />
+                              <AlertTypeBadge alertType={alert.alertType || alert.type} className="ml-2" />
+                              <div className="ml-2 text-sm text-gray-500">
+                                {alert.lastSeen?.location || alert.lastSeenLocation || 'Location not specified'}
+                              </div>
+                            </div>
+                          </div>
                         </div>
-                        <div className="ml-4">
-                          <div className="text-sm font-medium text-gray-900">
-                            {childData.firstName ? `${childData.firstName} ${childData.lastName}` : 'Child'}
-                          </div>
-                          <div className="flex items-center mt-1">
-                            <StatusBadge status={alert.status} />
-                            <AlertTypeBadge alertType={alert.alertType || alert.type} className="ml-2" />
-                            <div className="ml-2 text-sm text-gray-500">
-                              {alert.lastSeen?.location || alert.lastSeenLocation || 'Location not specified'}
-                            </div>
-                          </div>
+                        <div>
+                          <Link
+                            href={`/dashboard/parent/alerts/${alert.id}`}
+                            className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                          >
+                            View Details
+                          </Link>
                         </div>
                       </div>
-                      <div>
-                        <Link
-                          href={`/dashboard/parent/alerts/${alert.id}`}
-                          className="inline-flex items-center px-3 py-1 border border-transparent text-sm leading-5 font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
-                        >
-                          View Details
-                        </Link>
-                      </div>
-                    </div>
-                  </li>
-                );
-              })}
-            </ul>
-          </div>
-        )}
-        
-        {/* Pagination */}
-        {totalPages > 1 && (
-          <div className="mt-6">
-            <Pagination
-              currentPage={currentPage}
-              totalPages={totalPages}
-              onPageChange={handlePageChange}
-            />
-          </div>
-        )}
+                    </li>
+                  );
+                })}
+              </ul>
+            </div>
+          )}
+          
+          {/* Pagination */}
+          {totalPages > 1 && (
+            <div className="mt-6">
+              <Pagination
+                currentPage={currentPage}
+                totalPages={totalPages}
+                onPageChange={handlePageChange}
+              />
+            </div>
+          )}
+        </div>
       </div>
     </div>
   );
