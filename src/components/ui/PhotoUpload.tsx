@@ -114,7 +114,6 @@ export default function PhotoUpload({
           throw new Error('Failed to get photo URL');
         }
       }
-    }
     } catch (error) {
       console.error('Error uploading photo:', error);
       toast.error(error instanceof Error ? error.message : 'Failed to upload photo');

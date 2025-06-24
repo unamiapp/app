@@ -75,7 +75,14 @@ export const authOptions: NextAuthOptions = {
               
               // For registered users, check if they have a password in Firestore
               // Try their stored password or fallback to demo123
-              if (userData.password && credentials.password === userData.password || credentials.password === 'demo123') {
+              // Log password check for debugging
+              console.log('Password check:', {
+                hasStoredPassword: !!userData.password,
+                passwordMatch: userData.password === credentials.password,
+                isDemoPassword: credentials.password === 'demo123'
+              });
+              
+              if ((userData.password && credentials.password === userData.password) || credentials.password === 'demo123') {
                 const role = credentials.role || userData.role || 'parent';
                 
                 return {
@@ -145,8 +152,6 @@ export const authOptions: NextAuthOptions = {
             }
             
             console.log('User not found in Firebase and password not demo123');
-            return null;
-            
             return null;
           }
         } catch (error) {
