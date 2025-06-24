@@ -4,13 +4,21 @@ import { useState, useEffect } from 'react';
 import Link from 'next/link';
 import { toast } from 'react-hot-toast';
 import { ChildAlert } from '@/types/child';
+import Pagination from '@/components/ui/Pagination';
+import StatusBadge from '@/components/alerts/StatusBadge';
+import AlertTypeBadge from '@/components/alerts/AlertTypeBadge';
 
 export default function SchoolAlertsPage() {
   const [alerts, setAlerts] = useState<ChildAlert[]>([]);
   const [loading, setLoading] = useState(true);
-  const [activeFilter, setActiveFilter] = useState<string | null>(null);
+  const [statusFilter, setStatusFilter] = useState<string | null>(null);
+  const [typeFilter, setTypeFilter] = useState<string | null>(null);
   const [searchQuery, setSearchQuery] = useState('');
   const [childrenData, setChildrenData] = useState<{[key: string]: any}>({});
+  const [currentPage, setCurrentPage] = useState(1);
+  const [totalPages, setTotalPages] = useState(1);
+  const [totalItems, setTotalItems] = useState(0);
+  const itemsPerPage = 10;
 
   useEffect(() => {
     const fetchAlerts = async () => {
@@ -24,12 +32,29 @@ export default function SchoolAlertsPage() {
         const data = await response.json();
         let filteredAlerts = data.alerts || [];
         
-        // Apply filter client-side if needed
-        if (activeFilter) {
-          filteredAlerts = filteredAlerts.filter((alert: any) => alert.status === activeFilter);
+        // Apply status filter client-side if needed
+        if (statusFilter) {
+          filteredAlerts = filteredAlerts.filter((alert: any) => alert.status === statusFilter);
         }
         
-        setAlerts(filteredAlerts);
+        // Apply type filter client-side if needed
+        if (typeFilter) {
+          filteredAlerts = filteredAlerts.filter((alert: any) => 
+            (alert.alertType && alert.alertType.toLowerCase() === typeFilter.toLowerCase()) || 
+            (alert.type && alert.type.toLowerCase() === typeFilter.toLowerCase())
+          );
+        }
+        
+        // Calculate pagination
+        const total = filteredAlerts.length;
+        const pages = Math.ceil(total / itemsPerPage);
+        const startIndex = (currentPage - 1) * itemsPerPage;
+        const endIndex = startIndex + itemsPerPage;
+        const paginatedAlerts = filteredAlerts.slice(startIndex, endIndex);
+        
+        setTotalItems(total);
+        setTotalPages(Math.max(1, pages));
+        setAlerts(paginatedAlerts);
         
         // Fetch children data for each alert
         if (filteredAlerts.length > 0) {
@@ -65,10 +90,22 @@ export default function SchoolAlertsPage() {
     };
 
     fetchAlerts();
-  }, [activeFilter]);
+  }, [statusFilter, typeFilter, currentPage, itemsPerPage]);
 
-  const handleFilterChange = (filter: string | null) => {
-    setActiveFilter(filter);
+  const handleStatusFilterChange = (filter: string | null) => {
+    setStatusFilter(filter);
+    setCurrentPage(1); // Reset to first page when filter changes
+    setLoading(true);
+  };
+  
+  const handleTypeFilterChange = (filter: string | null) => {
+    setTypeFilter(filter);
+    setCurrentPage(1); // Reset to first page when filter changes
+    setLoading(true);
+  };
+  
+  const handlePageChange = (page: number) => {
+    setCurrentPage(page);
     setLoading(true);
   };
 
@@ -77,35 +114,12 @@ export default function SchoolAlertsPage() {
     // Filter alerts client-side based on search query
   };
 
-  const getStatusBadge = (status: string) => {
-    switch (status) {
-      case 'active':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-red-100 text-red-800">
-            Active
-          </span>
-        );
-      case 'resolved':
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-            Resolved
-          </span>
-        );
-      default:
-        return (
-          <span className="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-gray-100 text-gray-800">
-            {status}
-          </span>
-        );
-    }
-  };
-
   // Filter alerts based on search query
   const filteredAlerts = searchQuery
     ? alerts.filter(alert => {
         const childData = childrenData[alert.childId] || {};
         const childName = `${childData.firstName || ''} ${childData.lastName || ''}`.toLowerCase();
-        const location = (alert.lastSeenLocation || '').toLowerCase();
+        const location = (alert.lastSeenLocation || alert.lastSeen?.location || '').toLowerCase();
         const query = searchQuery.toLowerCase();
         
         return childName.includes(query) || location.includes(query);
@@ -129,34 +143,79 @@ export default function SchoolAlertsPage() {
             View alerts for students in your school.
           </p>
         </div>
-        <div className="mt-4 sm:mt-0 sm:ml-16 sm:flex-none">
-          <div className="inline-flex rounded-md shadow-sm">
+      </div>
+
+      <div className="mt-6">
+        {/* Status filters */}
+        <div className="mb-4">
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Status:</h3>
+          <div className="inline-flex rounded-md shadow-sm mb-4">
             <button
               type="button"
-              onClick={() => handleFilterChange(null)}
-              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-l-md ${!activeFilter ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+              onClick={() => handleStatusFilterChange(null)}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-l-md ${!statusFilter ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
             >
-              All Alerts
+              All Statuses
             </button>
             <button
               type="button"
-              onClick={() => handleFilterChange('active')}
-              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${activeFilter === 'active' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+              onClick={() => handleStatusFilterChange('active')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${statusFilter === 'active' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
             >
               Active
             </button>
             <button
               type="button"
-              onClick={() => handleFilterChange('resolved')}
-              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md ${activeFilter === 'resolved' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+              onClick={() => handleStatusFilterChange('resolved')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md ${statusFilter === 'resolved' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
             >
               Resolved
             </button>
           </div>
         </div>
-      </div>
+        
+        {/* Type filters */}
+        <div>
+          <h3 className="text-sm font-medium text-gray-700 mb-2">Filter by Type:</h3>
+          <div className="inline-flex rounded-md shadow-sm mb-6">
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange(null)}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-l-md ${!typeFilter ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              All Types
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange('missing')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${typeFilter === 'missing' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              Missing
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange('emergency')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${typeFilter === 'emergency' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              Emergency
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange('medical')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium ${typeFilter === 'medical' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              Medical
+            </button>
+            <button
+              type="button"
+              onClick={() => handleTypeFilterChange('school')}
+              className={`inline-flex items-center px-4 py-2 border border-transparent text-sm font-medium rounded-r-md ${typeFilter === 'school' ? 'text-white bg-blue-600 hover:bg-blue-700' : 'text-gray-700 bg-gray-50 hover:bg-gray-100'} focus:z-10 focus:outline-none focus:ring-1 focus:ring-blue-500`}
+            >
+              School
+            </button>
+          </div>
+        </div>
       
-      <div className="mt-8">
         <div className="bg-white shadow sm:rounded-lg mb-8">
           <div className="px-4 py-5 sm:p-6">
             <h3 className="text-lg leading-6 font-medium text-gray-900">
@@ -197,7 +256,10 @@ export default function SchoolAlertsPage() {
             </svg>
             <h3 className="mt-2 text-sm font-medium text-gray-900">No alerts found</h3>
             <p className="mt-1 text-sm text-gray-500">
-              {searchQuery ? 'No alerts match your search criteria.' : activeFilter ? `No ${activeFilter} alerts found.` : 'No alerts in the system at the moment.'}
+              {searchQuery ? 'No alerts match your search criteria.' : 
+               statusFilter || typeFilter ? 
+                `No alerts found matching the selected filters.` : 
+                'No alerts in the system at the moment.'}
             </p>
           </div>
         ) : (
@@ -229,9 +291,10 @@ export default function SchoolAlertsPage() {
                             {childData.firstName ? `${childData.firstName} ${childData.lastName}` : 'Child'}
                           </div>
                           <div className="flex items-center mt-1">
-                            {getStatusBadge(alert.status)}
+                            <StatusBadge status={alert.status} />
+                            <AlertTypeBadge alertType={alert.alertType || alert.type} className="ml-2" />
                             <div className="ml-2 text-sm text-gray-500">
-                              {alert.lastSeenLocation || 'Location not specified'}
+                              {alert.lastSeenLocation || alert.lastSeen?.location || 'Location not specified'}
                             </div>
                           </div>
                         </div>
@@ -249,6 +312,17 @@ export default function SchoolAlertsPage() {
                 );
               })}
             </ul>
+          </div>
+        )}
+        
+        {/* Pagination */}
+        {totalPages > 1 && (
+          <div className="mt-6">
+            <Pagination
+              currentPage={currentPage}
+              totalPages={totalPages}
+              onPageChange={handlePageChange}
+            />
           </div>
         )}
       </div>
