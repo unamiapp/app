@@ -5,8 +5,8 @@
  * All API routes should import from this file to ensure consistent access to Firebase services.
  */
 
-// Import from the fixed implementation
-import { adminAuth, adminDb, adminStorage } from './admin-fixed';
+// Import from the minimal implementation
+import { adminAuth, adminDb, adminStorage } from './admin-minimal';
 
 // Export admin services
 export { adminAuth, adminDb, adminStorage };
