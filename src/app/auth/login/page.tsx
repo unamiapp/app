@@ -67,7 +67,7 @@ export default function LoginPage() {
               <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
             </svg>
           </div>
-          <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">NCIP</h1>
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">UNCIP</h1>
           <h2 className="mt-2 text-xl sm:text-2xl font-bold text-gray-800">Already Signed In</h2>
           <p className="mt-2 text-sm text-gray-500">
             You are already authenticated as {session.user.email}
@@ -150,8 +150,8 @@ export default function LoginPage() {
             </svg>
           </div>
         </div>
-        <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">NCIP Login</h1>
-        <h2 className="mt-2 text-base sm:text-lg text-gray-600">National Child Identification Program</h2>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">UNCIP Login</h1>
+        <h2 className="mt-2 text-base sm:text-lg text-gray-600">Unami National Identification Program</h2>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">

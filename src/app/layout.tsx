@@ -6,7 +6,7 @@ const inter = Inter({ subsets: ['latin'] });
 
 export const metadata = {
   title: 'UNCIP App',
-  description: 'Child Protection Information System',
+  description: 'Unami National Identification Program',
 };
 
 export default function RootLayout({
