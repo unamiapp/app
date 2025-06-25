@@ -35,7 +35,6 @@ export default function EnhancedDashboardLayout({
             <div className="flex-auto">
               {showBackButton && (
                 <Button 
-                  as="a"
                   href={backUrl || `/dashboard/${role}`} 
                   variant="link"
                   className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-2 p-0"

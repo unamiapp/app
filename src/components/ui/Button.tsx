@@ -3,6 +3,7 @@
 import React from 'react';
 import { cva, type VariantProps } from 'class-variance-authority';
 import { cn } from '@/lib/utils/cn';
+import Link from 'next/link';
 
 const buttonVariants = cva(
   "inline-flex items-center justify-center rounded-lg text-sm font-medium transition-all duration-200 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none",
@@ -55,12 +56,10 @@ export interface ButtonProps
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
   href?: string;
-  as?: React.ElementType;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, responsive, isLoading, leftIcon, rightIcon, children, as, href, ...props }, ref) => {
-    const Comp = as || 'button';
+  ({ className, variant, size, fullWidth, responsive, isLoading, leftIcon, rightIcon, children, href, ...props }, ref) => {
     const buttonClasses = cn(buttonVariants({ variant, size, fullWidth, responsive, className }));
     
     const content = (
@@ -94,15 +93,15 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
       </>
     );
     
-    if (as === 'a') {
+    if (href) {
       return (
-        <a 
-          className={buttonClasses} 
+        <Link 
           href={href} 
-          {...props}
+          className={buttonClasses}
+          {...(props as any)}
         >
           {content}
-        </a>
+        </Link>
       );
     }
     
