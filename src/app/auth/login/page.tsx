@@ -151,7 +151,7 @@ export default function LoginPage() {
           </div>
         </div>
         <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">UNCIP Login</h1>
-        <h2 className="mt-2 text-base sm:text-lg text-gray-600">Unami National Identification Program</h2>
+        <h2 className="mt-2 text-base sm:text-lg text-gray-600">Unami National Child Identification Program</h2>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
