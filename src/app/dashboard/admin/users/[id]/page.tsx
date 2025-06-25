@@ -140,14 +140,12 @@ export default function UserProfilePage({ params }: { params: { id: string } }) 
                 {new Date(user.createdAt).toLocaleString()}
               </dd>
             </div>
-            {user.lastLogin && (
-              <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
-                <dt className="text-sm font-medium text-gray-500">Last login</dt>
-                <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
-                  {new Date(user.lastLogin).toLocaleString()}
-                </dd>
-              </div>
-            )}
+            <div className="bg-white px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
+              <dt className="text-sm font-medium text-gray-500">Updated at</dt>
+              <dd className="mt-1 text-sm text-gray-900 sm:mt-0 sm:col-span-2">
+                {new Date(user.updatedAt).toLocaleString()}
+              </dd>
+            </div>
             {user.phone && (
               <div className="bg-gray-50 px-4 py-5 sm:grid sm:grid-cols-3 sm:gap-4 sm:px-6">
                 <dt className="text-sm font-medium text-gray-500">Phone number</dt>
