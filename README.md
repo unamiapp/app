@@ -1,7 +1,7 @@
 # UNCIP App
 
 ## Overview
-UNCIP (Unami National Child Identification Program) is a secure platform that enables rapid child identification and enhances community safety in South African townships. The application connects parents, schools, and authorities to create a safer environment for children.
+UNCIP (Unami National Identification Program) is a secure platform that enables rapid child identification and enhances community safety in South African townships. The application connects parents, schools, and authorities to create a safer environment for children.
 
 ## Documentation
 - [Project Documentation](./PROJECT_DOCUMENTATION.md) - Comprehensive documentation of the project
