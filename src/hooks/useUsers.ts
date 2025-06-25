@@ -166,6 +166,20 @@ export const useUsers = () => {
     }
   };
 
+  // Get user by ID
+  const getUserById = async (id: string): Promise<UserProfile> => {
+    try {
+      const response = await fetch(`/api/admin-sdk/users?id=${id}`);
+      
+      if (!response.ok) throw new Error('Failed to fetch user');
+      const result = await response.json();
+      return result;
+    } catch (error) {
+      console.error('Error fetching user:', error);
+      throw error;
+    }
+  };
+
   return {
     users,
     loading,
@@ -173,6 +187,7 @@ export const useUsers = () => {
     fetchUsers,
     createUser,
     updateUser,
-    deleteUser
+    deleteUser,
+    getUserById
   };
 };

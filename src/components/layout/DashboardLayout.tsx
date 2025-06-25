@@ -147,7 +147,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
             </button>
           </div>
           
-          <div className="flex-shrink-0 flex items-center px-4 py-5 border-b border-indigo-800">
+          <div className="flex-shrink-0 flex items-center px-4 py-5">
             <h1 className="text-2xl font-bold text-white">UNCIP</h1>
           </div>
           
@@ -169,8 +169,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               ))}
             </nav>
             
-            {/* User profile fixed at bottom */}
-            <div className="mt-auto flex-shrink-0 flex border-t border-indigo-800 p-4 sticky bottom-0 bg-indigo-700">
+            {/* User profile fixed at bottom - removed border-t */}
+            <div className="mt-auto flex-shrink-0 flex p-4 sticky bottom-0 bg-indigo-700">
               <div className="flex items-center w-full">
                 <div className="flex-shrink-0">
                   <UserProfilePhoto
@@ -210,7 +210,7 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
       {/* Static sidebar for desktop */}
       <div className="hidden md:flex md:w-64 md:flex-col md:fixed md:inset-y-0">
         <div className="flex-1 flex flex-col min-h-0 bg-indigo-700">
-          <div className="flex items-center flex-shrink-0 px-4 py-5 border-b border-indigo-800">
+          <div className="flex items-center flex-shrink-0 px-4 py-5">
             <h1 className="text-2xl font-bold text-white">UNCIP</h1>
           </div>
           
@@ -232,8 +232,8 @@ export default function DashboardLayout({ children }: DashboardLayoutProps) {
               ))}
             </nav>
             
-            {/* User profile fixed at bottom */}
-            <div className="mt-auto flex-shrink-0 flex border-t border-indigo-800 p-4 sticky bottom-0 bg-indigo-700">
+            {/* User profile fixed at bottom - removed border-t */}
+            <div className="mt-auto flex-shrink-0 flex p-4 sticky bottom-0 bg-indigo-700">
               <div className="flex items-center w-full">
                 <div className="flex-shrink-0">
                   <UserProfilePhoto

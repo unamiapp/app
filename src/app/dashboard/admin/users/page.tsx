@@ -142,6 +142,12 @@ export default function UsersPage() {
                     {new Date(user.createdAt).toLocaleDateString()}
                   </td>
                   <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
+                    <Link
+                      href={`/dashboard/admin/users/${user.id}`}
+                      className="text-blue-600 hover:text-blue-900"
+                    >
+                      View Profile
+                    </Link>
                     <button
                       onClick={() => {
                         if (confirm('Are you sure you want to delete this user?')) {
