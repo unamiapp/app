@@ -3,6 +3,7 @@
 import React, { ReactNode } from 'react';
 import { useAuth } from '@/hooks/useAuth';
 import { Container } from '@/components/ui/Container';
+import { Button } from '@/components/ui/Button';
 import { UserRole } from '@/types/user';
 
 interface EnhancedDashboardLayoutProps {
@@ -33,15 +34,19 @@ export default function EnhancedDashboardLayout({
           <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
             <div className="flex-auto">
               {showBackButton && (
-                <a 
+                <Button 
+                  as="a"
                   href={backUrl || `/dashboard/${role}`} 
-                  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-2"
+                  variant="link"
+                  className="inline-flex items-center text-sm text-blue-600 hover:text-blue-800 mb-2 p-0"
+                  leftIcon={
+                    <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                      <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
+                    </svg>
+                  }
                 >
-                  <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M10 19l-7-7m0 0l7-7m-7 7h18" />
-                  </svg>
                   Back
-                </a>
+                </Button>
               )}
               {title && (
                 <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 animate-fade-in">{title}</h1>

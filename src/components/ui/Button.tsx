@@ -54,17 +54,17 @@ export interface ButtonProps
   responsive?: boolean;
   leftIcon?: React.ReactNode;
   rightIcon?: React.ReactNode;
+  href?: string;
+  as?: React.ElementType;
 }
 
 const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
-  ({ className, variant, size, fullWidth, responsive, isLoading, leftIcon, rightIcon, children, ...props }, ref) => {
-    return (
-      <button
-        className={cn(buttonVariants({ variant, size, fullWidth, responsive, className }))}
-        ref={ref}
-        disabled={isLoading || props.disabled}
-        {...props}
-      >
+  ({ className, variant, size, fullWidth, responsive, isLoading, leftIcon, rightIcon, children, as, href, ...props }, ref) => {
+    const Comp = as || 'button';
+    const buttonClasses = cn(buttonVariants({ variant, size, fullWidth, responsive, className }));
+    
+    const content = (
+      <>
         {isLoading ? (
           <svg
             className="mr-2 h-4 w-4 animate-spin"
@@ -91,6 +91,29 @@ const Button = React.forwardRef<HTMLButtonElement, ButtonProps>(
         ) : null}
         {children}
         {rightIcon && !isLoading && <span className="ml-2">{rightIcon}</span>}
+      </>
+    );
+    
+    if (as === 'a') {
+      return (
+        <a 
+          className={buttonClasses} 
+          href={href} 
+          {...props}
+        >
+          {content}
+        </a>
+      );
+    }
+    
+    return (
+      <button
+        className={buttonClasses}
+        ref={ref}
+        disabled={isLoading || props.disabled}
+        {...props}
+      >
+        {content}
       </button>
     );
   }

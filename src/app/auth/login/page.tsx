@@ -74,25 +74,19 @@ export default function LoginPage() {
           </p>
           <div className="mt-6 space-y-3">
             {callbackUrl ? (
-              <Button
-                as="a"
+              <a
                 href={decodeURIComponent(callbackUrl)}
-                variant="primary"
-                fullWidth
-                responsive
+                className="inline-flex w-full justify-center items-center rounded-lg border border-transparent bg-blue-700 px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-medium text-white shadow-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
               >
                 Continue to Dashboard
-              </Button>
+              </a>
             ) : (
-              <Button
-                as="a"
+              <a
                 href={`/dashboard/${(session.user as any)?.role || 'parent'}`}
-                variant="primary"
-                fullWidth
-                responsive
+                className="inline-flex w-full justify-center items-center rounded-lg border border-transparent bg-blue-700 px-4 py-2.5 sm:px-6 sm:py-3 text-sm sm:text-base font-medium text-white shadow-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 transition-all duration-200"
               >
                 Go to Dashboard
-              </Button>
+              </a>
             )}
             <Button
               onClick={() => signOut({ callbackUrl: '/auth/login' })}
