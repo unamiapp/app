@@ -273,18 +273,19 @@ export default function QuickActions({ role }: QuickActionsProps) {
         <Link
           key={index}
           href={action.href}
-          className="relative flex items-center p-4 rounded-lg border border-gray-200 bg-white hover:bg-gray-50 transition-all duration-200 shadow-sm hover:shadow"
+          className="relative flex items-center p-4 sm:p-5 rounded-xl border border-gray-200 bg-white hover:bg-gray-50 transition-all duration-200 shadow-md hover:shadow-lg transform hover:-translate-y-1"
           data-testid={`quick-action-${action.name.toLowerCase().replace(/\s+/g, '-')}`}
           aria-label={`${action.name}: ${action.description}`}
+          style={{ animationDelay: `${index * 100}ms` }}
         >
-          <div className={`flex-shrink-0 h-12 w-12 rounded-md flex items-center justify-center ${action.color}`}>
+          <div className={`flex-shrink-0 h-12 w-12 rounded-lg flex items-center justify-center ${action.color} transition-all duration-200 hover:scale-110`}>
             {action.icon}
           </div>
           <div className="ml-4 flex-1">
             <p className="text-base font-medium text-gray-900">{action.name}</p>
             <p className="text-sm text-gray-500">{action.description}</p>
           </div>
-          <div className="ml-2 flex-shrink-0 text-gray-400">
+          <div className="ml-2 flex-shrink-0 text-blue-500">
             <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
               <path fillRule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clipRule="evenodd" />
             </svg>

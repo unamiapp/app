@@ -233,16 +233,20 @@ export default function DashboardStats({ role }: DashboardStatsProps) {
 
   return (
     <div>
-      <dl className="grid grid-cols-1 gap-5 sm:grid-cols-2 lg:grid-cols-4">
-        {stats.map((stat) => (
-          <div key={stat.name} className="relative bg-white pt-5 px-4 pb-6 sm:pt-6 sm:px-6 shadow-sm rounded-lg border border-gray-200 overflow-hidden">
+      <dl className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
+        {stats.map((stat, index) => (
+          <div 
+            key={stat.name} 
+            className="relative bg-white pt-5 px-4 pb-5 sm:pt-6 sm:px-6 shadow-md rounded-xl border border-gray-200 overflow-hidden transition-all duration-200 hover:shadow-lg hover:border-gray-300"
+            style={{ animationDelay: `${index * 100}ms` }}
+          >
             <dt>
-              <div className="absolute rounded-md p-3 bg-indigo-50">
+              <div className="absolute rounded-lg p-3 bg-blue-50 transition-transform duration-200 hover:scale-110">
                 {stat.icon}
               </div>
               <p className="ml-16 text-sm font-medium text-gray-500 truncate">{stat.name}</p>
             </dt>
-            <dd className="ml-16 flex items-baseline">
+            <dd className="ml-16 flex items-baseline mt-1">
               <p className="text-2xl font-semibold text-gray-900">{stat.value}</p>
               <p
                 className={`ml-2 flex items-baseline text-sm font-semibold ${

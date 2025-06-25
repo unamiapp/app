@@ -6,6 +6,12 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { toast } from 'react-hot-toast';
 import { signIn, signOut, useSession } from 'next-auth/react';
+import { Button } from '@/components/ui/Button';
+import { Card, CardContent } from '@/components/ui/Card';
+import { Divider } from '@/components/ui/Divider';
+import { Input } from '@/components/ui/Input';
+import { Checkbox } from '@/components/ui/Checkbox';
+import LoginForm from '@/components/auth/LoginForm';
 
 interface LoginFormData {
   email: string;
@@ -17,7 +23,6 @@ export default function LoginPage() {
   const router = useRouter();
   const { data: session, status } = useSession();
   const [isLoading, setIsLoading] = useState(false);
-  const [showPassword, setShowPassword] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const [callbackUrl, setCallbackUrl] = useState<string | null>(null);
   const [selectedRole, setSelectedRole] = useState<string>('parent');
@@ -43,7 +48,7 @@ export default function LoginPage() {
   // Show loading while checking authentication status
   if (!isClient) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
           <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-blue-600 mx-auto"></div>
           <p className="mt-2 text-sm text-gray-500">Loading...</p>
@@ -55,35 +60,48 @@ export default function LoginPage() {
   // Show message for authenticated users instead of redirecting
   if (status === 'authenticated' && session?.user) {
     return (
-      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
         <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-          <h1 className="text-3xl font-bold text-blue-700">UNCIP</h1>
-          <h2 className="mt-2 text-2xl font-bold text-gray-800">Already Signed In</h2>
+          <div className="mb-6">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-12 w-12 mx-auto text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" />
+            </svg>
+          </div>
+          <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">NCIP</h1>
+          <h2 className="mt-2 text-xl sm:text-2xl font-bold text-gray-800">Already Signed In</h2>
           <p className="mt-2 text-sm text-gray-500">
             You are already authenticated as {session.user.email}
           </p>
           <div className="mt-6 space-y-3">
             {callbackUrl ? (
-              <a
+              <Button
+                as="a"
                 href={decodeURIComponent(callbackUrl)}
-                className="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                variant="primary"
+                fullWidth
+                responsive
               >
                 Continue to Dashboard
-              </a>
+              </Button>
             ) : (
-              <a
+              <Button
+                as="a"
                 href={`/dashboard/${(session.user as any)?.role || 'parent'}`}
-                className="block w-full text-center px-4 py-2 border border-transparent text-sm font-medium rounded-md text-white bg-blue-600 hover:bg-blue-700"
+                variant="primary"
+                fullWidth
+                responsive
               >
                 Go to Dashboard
-              </a>
+              </Button>
             )}
-            <button
+            <Button
               onClick={() => signOut({ callbackUrl: '/auth/login' })}
-              className="block w-full px-4 py-2 border border-gray-300 text-sm font-medium rounded-md text-gray-700 bg-white hover:bg-gray-50"
+              variant="outline"
+              fullWidth
+              responsive
             >
               Sign Out
-            </button>
+            </Button>
           </div>
         </div>
       </div>
@@ -129,66 +147,59 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+    <div className="min-h-screen bg-gradient-to-br from-blue-50 to-blue-100 flex flex-col justify-center py-8 sm:py-12 px-4 sm:px-6 lg:px-8">
       <div className="sm:mx-auto sm:w-full sm:max-w-md text-center">
-        <h1 className="text-3xl font-bold text-blue-700">UNCIP</h1>
-        <h2 className="mt-2 text-2xl font-bold text-gray-800">Welcome Back</h2>
-        <p className="mt-2 text-sm text-gray-500">
-          Don't have an account?{' '}
-          <Link href="/auth/register" className="font-medium text-blue-700 hover:text-blue-800">
-            Create one now
-          </Link>
-        </p>
+        <div className="flex justify-center mb-6">
+          <div className="h-16 w-16 bg-blue-600 rounded-full flex items-center justify-center">
+            <svg xmlns="http://www.w3.org/2000/svg" className="h-10 w-10 text-white" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 11c0 3.517-1.009 6.799-2.753 9.571m-3.44-2.04l.054-.09A13.916 13.916 0 008 11a4 4 0 118 0c0 1.017-.07 2.019-.203 3m-2.118 6.844A21.88 21.88 0 0015.171 17m3.839 1.132c.645-2.266.99-4.659.99-7.132A8 8 0 008 4.07M3 15.364c.64-1.319 1-2.8 1-4.364 0-1.457.39-2.823 1.07-4" />
+            </svg>
+          </div>
+        </div>
+        <h1 className="text-2xl sm:text-3xl font-bold text-blue-700">NCIP Login</h1>
+        <h2 className="mt-2 text-base sm:text-lg text-gray-600">National Child Identification Program</h2>
       </div>
 
       <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
-        <div className="bg-white py-8 px-4 shadow sm:rounded-lg sm:px-10 border border-gray-200">
-          <form className="space-y-6" onSubmit={handleSubmit(onSubmit)}>
-            <div>
-              <label htmlFor="email" className="block text-sm font-medium text-gray-700">
-                Email address
-              </label>
-              <div className="mt-1">
-                <input
-                  id="email"
-                  type="email"
-                  autoComplete="email"
-                  className={`appearance-none block w-full px-3 py-2 border ${
-                    errors.email ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
-                  placeholder="Enter your email"
-                  {...register('email', {
-                    required: 'Email is required',
-                    pattern: {
-                      value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
-                      message: 'Invalid email address',
-                    },
-                  })}
-                />
-                {errors.email && (
-                  <p className="mt-2 text-sm text-red-600">{errors.email.message}</p>
-                )}
-              </div>
-            </div>
+        <Card variant="auth" className="w-full" padding="lg">
+          <CardContent className="pt-2 px-0">
+            <form className="space-y-5" onSubmit={handleSubmit(onSubmit)}>
+              <Input
+                label="Email address"
+                type="email"
+                id="email"
+                placeholder="Enter your email"
+                error={errors.email?.message}
+                leftIcon={
+                  <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
+                    <path d="M2.003 5.884L10 9.882l7.997-3.998A2 2 0 0016 4H4a2 2 0 00-1.997 1.884z" />
+                    <path d="M18 8.118l-8 4-8-4V14a2 2 0 002 2h12a2 2 0 002-2V8.118z" />
+                  </svg>
+                }
+                {...register('email', {
+                  required: 'Email is required',
+                  pattern: {
+                    value: /^[A-Z0-9._%+-]+@[A-Z0-9.-]+\.[A-Z]{2,}$/i,
+                    message: 'Invalid email address',
+                  },
+                })}
+              />
 
-            <div>
-              <div className="flex justify-between">
-                <label htmlFor="password" className="block text-sm font-medium text-gray-700">
-                  Password
-                </label>
-                <Link href="/auth/forgot-password" className="text-sm font-medium text-blue-700 hover:text-blue-800">
-                  Forgot password?
-                </Link>
-              </div>
-              <div className="mt-1 relative">
-                <input
+              <div>
+                <div className="flex items-center justify-between mb-1.5">
+                  <label htmlFor="password" className="block text-sm font-medium text-gray-700">
+                    Password
+                  </label>
+                  <Link href="/auth/forgot-password" className="text-sm font-medium text-blue-700 hover:text-blue-800 transition-colors">
+                    Forgot password?
+                  </Link>
+                </div>
+                <Input
+                  type="password"
                   id="password"
-                  type={showPassword ? "text" : "password"}
-                  autoComplete="current-password"
-                  className={`appearance-none block w-full px-3 py-2 border ${
-                    errors.password ? 'border-red-500' : 'border-gray-300'
-                  } rounded-md shadow-sm placeholder-gray-400 focus:outline-none focus:ring-blue-500 focus:border-blue-500 sm:text-sm`}
                   placeholder="Enter your password"
+                  error={errors.password?.message}
+                  showPasswordToggle={true}
                   {...register('password', {
                     required: 'Password is required',
                     minLength: {
@@ -197,80 +208,35 @@ export default function LoginPage() {
                     },
                   })}
                 />
-                <button
-                  type="button"
-                  onClick={() => setShowPassword(!showPassword)}
-                  className="absolute inset-y-0 right-0 pr-3 flex items-center text-gray-500 hover:text-gray-700"
-                >
-                  {showPassword ? (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path fillRule="evenodd" d="M3.707 2.293a1 1 0 00-1.414 1.414l14 14a1 1 0 001.414-1.414l-1.473-1.473A10.014 10.014 0 0019.542 10C18.268 5.943 14.478 3 10 3a9.958 9.958 0 00-4.512 1.074l-1.78-1.781zm4.261 4.26l1.514 1.515a2.003 2.003 0 012.45 2.45l1.514 1.514a4 4 0 00-5.478-5.478z" clipRule="evenodd" />
-                      <path d="M12.454 16.697L9.75 13.992a4 4 0 01-3.742-3.741L2.335 6.578A9.98 9.98 0 00.458 10c1.274 4.057 5.065 7 9.542 7 .847 0 1.669-.105 2.454-.303z" />
-                    </svg>
-                  ) : (
-                    <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5" viewBox="0 0 20 20" fill="currentColor">
-                      <path d="M10 12a2 2 0 100-4 2 2 0 000 4z" />
-                      <path fillRule="evenodd" d="M.458 10C1.732 5.943 5.522 3 10 3s8.268 2.943 9.542 7c-1.274 4.057-5.064 7-9.542 7S1.732 14.057.458 10zM14 10a4 4 0 11-8 0 4 4 0 018 0z" clipRule="evenodd" />
-                    </svg>
-                  )}
-                </button>
-                {errors.password && (
-                  <p className="mt-2 text-sm text-red-600">{errors.password.message}</p>
-                )}
               </div>
-            </div>
 
-            {/* Hidden role field */}
-            <input type="hidden" value={selectedRole} {...register('role')} />
+              {/* Hidden role field */}
+              <input type="hidden" value={selectedRole} {...register('role')} />
 
-            <div className="flex items-center">
-              <input
+              <Checkbox
                 id="remember-me"
                 name="remember-me"
-                type="checkbox"
-                className="h-4 w-4 text-blue-600 focus:ring-blue-500 border-gray-300 rounded"
+                label="Remember me"
               />
-              <label htmlFor="remember-me" className="ml-2 block text-sm text-gray-700">
-                Remember me
-              </label>
-            </div>
 
-            <div>
-              <button
+              <Button
                 type="submit"
-                className="w-full flex justify-center py-2 px-4 border border-transparent rounded-md shadow-sm text-sm font-medium text-white bg-blue-700 hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-blue-500"
-                disabled={isLoading}
+                variant="primary"
+                fullWidth
+                responsive
+                isLoading={isLoading}
               >
-                {isLoading ? (
-                  <>
-                    <svg className="animate-spin -ml-1 mr-3 h-5 w-5 text-white" xmlns="http://www.w3.org/2000/svg" fill="none" viewBox="0 0 24 24">
-                      <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4"></circle>
-                      <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4zm2 5.291A7.962 7.962 0 014 12H0c0 3.042 1.135 5.824 3 7.938l3-2.647z"></path>
-                    </svg>
-                    Signing in...
-                  </>
-                ) : (
-                  'Sign in'
-                )}
-              </button>
-            </div>
-          </form>
+                {isLoading ? 'Signing in...' : 'Sign in'}
+              </Button>
+            </form>
 
-          <div className="mt-6">
-            <div className="relative">
-              <div className="absolute inset-0 flex items-center">
-                <div className="w-full border-t border-gray-300"></div>
-              </div>
-              <div className="relative flex justify-center text-sm">
-                <span className="px-2 bg-white text-gray-500">Select Role</span>
-              </div>
-            </div>
+            <Divider text="Select Role" className="my-6" />
 
-            <div className="mt-6 grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-3">
               <button
                 type="button"
                 onClick={() => setRole('admin')}
-                className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                className={`w-full inline-flex justify-center py-2.5 px-4 border rounded-lg shadow-sm text-sm font-medium transition-all duration-200 ${
                   selectedRole === 'admin' 
                     ? 'border-blue-500 bg-blue-100 text-blue-800' 
                     : 'border-blue-200 bg-blue-50 text-blue-700 hover:bg-blue-100'
@@ -281,7 +247,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setRole('parent')}
-                className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                className={`w-full inline-flex justify-center py-2.5 px-4 border rounded-lg shadow-sm text-sm font-medium transition-all duration-200 ${
                   selectedRole === 'parent' 
                     ? 'border-green-500 bg-green-100 text-green-800' 
                     : 'border-green-200 bg-green-50 text-green-700 hover:bg-green-100'
@@ -292,7 +258,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setRole('school')}
-                className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                className={`w-full inline-flex justify-center py-2.5 px-4 border rounded-lg shadow-sm text-sm font-medium transition-all duration-200 ${
                   selectedRole === 'school' 
                     ? 'border-yellow-500 bg-yellow-100 text-yellow-800' 
                     : 'border-yellow-200 bg-yellow-50 text-yellow-700 hover:bg-yellow-100'
@@ -303,7 +269,7 @@ export default function LoginPage() {
               <button
                 type="button"
                 onClick={() => setRole('authority')}
-                className={`w-full inline-flex justify-center py-2 px-4 border rounded-md shadow-sm text-sm font-medium ${
+                className={`w-full inline-flex justify-center py-2.5 px-4 border rounded-lg shadow-sm text-sm font-medium transition-all duration-200 ${
                   selectedRole === 'authority' 
                     ? 'border-red-500 bg-red-100 text-red-800' 
                     : 'border-red-200 bg-red-50 text-red-700 hover:bg-red-100'
@@ -312,7 +278,8 @@ export default function LoginPage() {
                 Authority
               </button>
             </div>
-            <div className="mt-4 p-3 bg-gray-50 rounded-md">
+            
+            <div className="mt-5 p-4 bg-gray-50 rounded-lg">
               <p className="text-xs text-gray-600 mb-2">
                 <strong>Login Instructions:</strong>
               </p>
@@ -328,11 +295,20 @@ export default function LoginPage() {
                 </Link>
               </div>
             </div>
-            <p className="mt-2 text-xs text-center text-gray-500">
-              Selected role: <span className="font-semibold capitalize text-gray-700">{selectedRole}</span>
-            </p>
-          </div>
-        </div>
+            
+            <div className="mt-4 text-center">
+              <p className="text-xs text-gray-500">
+                Selected role: <span className="font-semibold capitalize text-gray-700">{selectedRole}</span>
+              </p>
+              <p className="mt-4 text-xs text-gray-500">
+                Don't have an account?{' '}
+                <Link href="/auth/register" className="font-medium text-blue-700 hover:text-blue-800">
+                  Create one now
+                </Link>
+              </p>
+            </div>
+          </CardContent>
+        </Card>
       </div>
     </div>
   );

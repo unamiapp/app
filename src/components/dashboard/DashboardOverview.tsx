@@ -48,11 +48,11 @@ export default function DashboardOverview({ role }: DashboardOverviewProps) {
   };
 
   return (
-    <div className="px-2 sm:px-6 lg:px-8 max-w-7xl mx-auto">
-      <div className="bg-white rounded-xl shadow-sm border border-gray-200 p-4 sm:p-6 mb-6">
+    <div className="px-3 sm:px-6 lg:px-8 max-w-7xl mx-auto">
+      <div className="bg-white rounded-xl shadow-md border border-gray-200 p-4 sm:p-6 mb-5 sm:mb-6 transition-all duration-200 hover:shadow-lg">
         <div className="flex flex-col sm:flex-row sm:items-center sm:justify-between">
           <div className="flex-auto">
-            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900">{getRoleTitle()}</h1>
+            <h1 className="text-xl sm:text-2xl font-semibold text-gray-900 animate-fade-in">{getRoleTitle()}</h1>
             <p className="mt-2 text-sm text-gray-600">
               Welcome{userProfile?.displayName ? `, ${userProfile.displayName}` : ''}! {getRoleDescription()}
             </p>
@@ -60,8 +60,11 @@ export default function DashboardOverview({ role }: DashboardOverviewProps) {
           <div className="mt-4 sm:mt-0 sm:ml-16 flex-none">
             <a
               href={`/dashboard/${role}/profile`}
-              className="inline-flex items-center justify-center rounded-md border border-transparent bg-indigo-600 px-4 py-2 text-sm font-medium text-white shadow-sm hover:bg-indigo-700 focus:outline-none focus:ring-2 focus:ring-indigo-500 focus:ring-offset-2 w-full sm:w-auto"
+              className="inline-flex items-center justify-center rounded-lg border border-transparent bg-blue-700 px-4 py-2.5 text-sm font-medium text-white shadow-md hover:bg-blue-800 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:ring-offset-2 w-full sm:w-auto transition-all duration-200"
             >
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 mr-1.5" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+              </svg>
               View Profile
             </a>
           </div>
@@ -69,17 +72,27 @@ export default function DashboardOverview({ role }: DashboardOverviewProps) {
       </div>
       
       {/* Stats Overview */}
-      <div className="mb-6">
+      <div className="mb-5 sm:mb-6 animate-fade-in">
         <DashboardStats role={role} />
       </div>
       
-      <div className="grid grid-cols-1 gap-4 sm:gap-6 lg:grid-cols-3">
+      <div className="grid grid-cols-1 gap-5 lg:grid-cols-3 lg:gap-6">
         {/* Quick Actions */}
         <div className="lg:col-span-2">
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-200 h-full">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base sm:text-lg font-medium text-gray-900">Quick Actions</h2>
-              <button className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-800">View All</button>
+          <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-200 h-full transition-all duration-200 hover:shadow-lg">
+            <div className="flex items-center justify-between mb-4 sm:mb-5">
+              <h2 className="text-base sm:text-lg font-medium text-gray-900 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M13 10V3L4 14h7v7l9-11h-7z" />
+                </svg>
+                Quick Actions
+              </h2>
+              <button className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center">
+                View All
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </button>
             </div>
             <QuickActions role={role} />
           </div>
@@ -87,10 +100,20 @@ export default function DashboardOverview({ role }: DashboardOverviewProps) {
         
         {/* Recent Activity */}
         <div className="lg:col-span-1">
-          <div className="bg-white rounded-xl shadow-sm p-4 sm:p-6 border border-gray-200 h-full">
-            <div className="flex items-center justify-between mb-4">
-              <h2 className="text-base sm:text-lg font-medium text-gray-900">Recent Activity</h2>
-              <a href={`/dashboard/${role}/activities`} className="text-xs sm:text-sm text-indigo-600 hover:text-indigo-800">View All</a>
+          <div className="bg-white rounded-xl shadow-md p-4 sm:p-6 border border-gray-200 h-full transition-all duration-200 hover:shadow-lg">
+            <div className="flex items-center justify-between mb-4 sm:mb-5">
+              <h2 className="text-base sm:text-lg font-medium text-gray-900 flex items-center">
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 mr-2 text-blue-600" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+                </svg>
+                Recent Activity
+              </h2>
+              <a href={`/dashboard/${role}/activities`} className="text-xs sm:text-sm text-blue-600 hover:text-blue-800 transition-colors duration-200 flex items-center">
+                View All
+                <svg xmlns="http://www.w3.org/2000/svg" className="h-4 w-4 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                </svg>
+              </a>
             </div>
             <RecentActivity role={role} limit={5} />
           </div>

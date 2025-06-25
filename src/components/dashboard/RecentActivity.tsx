@@ -340,13 +340,14 @@ export default function RecentActivity({ role, limit = 5 }: RecentActivityProps)
 
   if (loading) {
     return (
-      <div className="space-y-3">
+      <div className="space-y-4">
         {[...Array(3)].map((_, i) => (
           <div key={i} className="animate-pulse flex space-x-3">
-            <div className="rounded-full bg-gray-200 h-8 w-8"></div>
+            <div className="rounded-full bg-gray-200 h-9 w-9"></div>
             <div className="flex-1 space-y-2">
               <div className="h-4 bg-gray-200 rounded w-3/4"></div>
               <div className="h-3 bg-gray-200 rounded w-1/2"></div>
+              <div className="h-2 bg-gray-200 rounded w-1/4"></div>
             </div>
           </div>
         ))}
@@ -356,7 +357,7 @@ export default function RecentActivity({ role, limit = 5 }: RecentActivityProps)
 
   if (activities.length === 0) {
     return (
-      <div className="text-center py-6">
+      <div className="text-center py-6 bg-gray-50 rounded-lg border border-gray-100">
         <svg className="mx-auto h-12 w-12 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
         </svg>
@@ -367,13 +368,22 @@ export default function RecentActivity({ role, limit = 5 }: RecentActivityProps)
 
   return (
     <div className="space-y-4">
-      {activities.map((activity) => (
-        <div key={activity.id} className="flex space-x-3">
+      {activities.map((activity, index) => (
+        <div 
+          key={activity.id} 
+          className="flex space-x-3 p-2 hover:bg-gray-50 rounded-lg transition-colors duration-200"
+          style={{ animationDelay: `${index * 100}ms` }}
+        >
           {getActivityIcon(activity.type)}
           <div className="flex-1 min-w-0">
             <p className="text-sm font-medium text-gray-900">{activity.title}</p>
             <p className="text-sm text-gray-500">{activity.description}</p>
-            <p className="text-xs text-gray-400 mt-1">{formatTime(activity.timestamp)}</p>
+            <p className="text-xs text-gray-400 mt-1 flex items-center">
+              <svg xmlns="http://www.w3.org/2000/svg" className="h-3 w-3 mr-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+              {formatTime(activity.timestamp)}
+            </p>
           </div>
         </div>
       ))}

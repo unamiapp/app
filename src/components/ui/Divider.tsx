@@ -3,35 +3,56 @@
 import React from 'react';
 import { cn } from '@/lib/utils/cn';
 
-interface DividerProps extends React.HTMLAttributes<HTMLDivElement> {
+interface DividerProps {
+  className?: string;
   text?: string;
+  orientation?: 'horizontal' | 'vertical';
+  variant?: 'solid' | 'dashed' | 'dotted';
 }
 
-const Divider = React.forwardRef<HTMLDivElement, DividerProps>(
-  ({ className, text, ...props }, ref) => {
-    if (!text) {
-      return (
-        <div
-          ref={ref}
-          className={cn("w-full h-px bg-gray-200 my-6", className)}
-          {...props}
-        />
-      );
-    }
+export function Divider({
+  className,
+  text,
+  orientation = 'horizontal',
+  variant = 'solid',
+}: DividerProps) {
+  const variantClasses = {
+    solid: 'border-solid',
+    dashed: 'border-dashed',
+    dotted: 'border-dotted',
+  };
 
+  if (text) {
     return (
-      <div ref={ref} className={cn("relative my-6", className)} {...props}>
-        <div className="absolute inset-0 flex items-center">
-          <div className="w-full border-t border-gray-200"></div>
-        </div>
-        <div className="relative flex justify-center text-sm">
-          <span className="px-4 bg-white text-gray-500">{text}</span>
-        </div>
+      <div className={cn('flex items-center', className)}>
+        <div className={cn('flex-grow border-t border-gray-300', variantClasses[variant])} />
+        <span className="flex-shrink px-3 text-sm text-gray-500">{text}</span>
+        <div className={cn('flex-grow border-t border-gray-300', variantClasses[variant])} />
       </div>
     );
   }
-);
 
-Divider.displayName = "Divider";
+  if (orientation === 'vertical') {
+    return (
+      <div
+        className={cn(
+          'self-stretch w-px h-auto mx-2 border-l border-gray-300',
+          variantClasses[variant],
+          className
+        )}
+      />
+    );
+  }
 
-export { Divider };
+  return (
+    <div
+      className={cn(
+        'w-full border-t border-gray-300 my-4',
+        variantClasses[variant],
+        className
+      )}
+    />
+  );
+}
+
+export default Divider;
